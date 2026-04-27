@@ -20,7 +20,7 @@ async def transcribe_audio(
 ) -> TranscriptionResult:
     if fallback_transcript:
         return TranscriptionResult(
-            language=language_hint or "en",
+            language=language_hint or "unknown",
             transcript=fallback_transcript,
             transcript_raw=fallback_transcript,
         )
@@ -29,4 +29,3 @@ async def transcribe_audio(
         f"No transcriber is configured for {audio_path}. "
         "Pass a fallback transcript in demo mode or wire this to Whisper."
     )
-

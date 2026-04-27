@@ -14,7 +14,7 @@ class TextIngestRequest(BaseModel):
     transcript_raw: str | None = None
     city_bucket: str | None = None
     platform: str | None = None
-    source: Source = "synthetic"
+    source: Source
 
 
 class GrievanceRead(BaseModel):

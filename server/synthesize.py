@@ -13,6 +13,18 @@ def _compact_json(value: object) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
+def _format_source_ids(grievance_ids: list[str], limit: int = 20) -> str:
+    if not grievance_ids:
+        return "No grievance IDs yet."
+
+    visible_ids = grievance_ids[:limit]
+    footer = ", ".join(visible_ids)
+    remaining = len(grievance_ids) - len(visible_ids)
+    if remaining:
+        footer = f"{footer}, and {remaining} more"
+    return footer
+
+
 def _scoped_grievance_query(scope: SynthesisRequest) -> Select[tuple[Grievance]]:
     stmt = select(Grievance)
     if scope.city:
@@ -85,7 +97,7 @@ def create_export(db: Session, synthesis: Synthesis, kind: ExportKind) -> Export
             "",
             "## Sources",
             "",
-            ", ".join(grievance_ids) if grievance_ids else "No grievance IDs yet.",
+            _format_source_ids(grievance_ids),
         ]
     )
 
@@ -100,4 +112,3 @@ def create_export(db: Session, synthesis: Synthesis, kind: ExportKind) -> Export
     db.commit()
     db.refresh(export)
     return export
-

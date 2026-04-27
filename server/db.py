@@ -81,5 +81,6 @@ def reset_database(database_url: str | None = None) -> None:
     _engine = None
     _session_factory = None
     if database_url is not None:
+        # Tests intentionally mutate the cached settings object so all DB helpers
+        # use the same isolated SQLite URL without a broader config override layer.
         get_settings().database_url = database_url
-
