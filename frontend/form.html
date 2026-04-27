@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Your Voice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Work Sans', -apple-system, sans-serif;
+            background: #0a0a0a;
+            color: #e8e8e8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #111;
+            border-bottom: 1px solid #222;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .lang-toggle {
+            display: flex;
+            gap: 0;
+            background: #1a1a1a;
+            border-radius: 6px;
+            padding: 2px;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: #d93025;
+            color: white;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.875rem;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #e8e8e8;
+            font-size: 1rem;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #d93025;
+        }
+
+        .platform-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .radio-item {
+            position: relative;
+        }
+
+        .radio-item input {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .radio-item label {
+            display: block;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 0.875rem;
+            text-align: center;
+            cursor: pointer;
+            margin: 0;
+            color: #e8e8e8;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .radio-item input:checked + label {
+            background: #d93025;
+            border-color: #d93025;
+            color: white;
+        }
+
+        .radio-item label:hover {
+            border-color: #d93025;
+        }
+
+        .record-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .record-section.recording {
+            border-color: #d93025;
+            background: #1a0f0f;
+        }
+
+        .mic-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .record-section.recording .mic-icon {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        .timer {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #d93025;
+            font-variant-numeric: tabular-nums;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .record-section.recording .timer {
+            display: block;
+        }
+
+        .record-btn {
+            background: #d93025;
+            color: white;
+            border: none;
+            padding: 1.25rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+
+        .record-btn:hover:not(:disabled) {
+            background: #c1271f;
+        }
+
+        .record-btn:active {
+            transform: scale(0.98);
+        }
+
+        .record-btn.recording {
+            background: #333;
+        }
+
+        .record-btn.recording:hover {
+            background: #444;
+        }
+
+        .record-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .confirmation {
+            display: none;
+            background: #0f2f1f;
+            border: 1px solid #1a4a2f;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .confirmation.show {
+            display: block;
+        }
+
+        .confirmation h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #4ade80;
+        }
+
+        .confirmation p {
+            color: #aaa;
+        }
+
+        .error {
+            display: none;
+            background: #2f0f0f;
+            border: 1px solid #4a1a1a;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            color: #ff6b6b;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .platform-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="lang-toggle">
+            <button class="lang-btn active" data-lang="en">English</button>
+            <button class="lang-btn" data-lang="hi">हिन्दी</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div id="formView">
+                <form id="voiceForm">
+                    <div class="form-group">
+                        <label for="city">District (optional)</label>
+                        <select id="city" name="city">
+                            <option value="">Select district</option>
+                            <option value="north-delhi">North Delhi</option>
+                            <option value="south-delhi">South Delhi</option>
+                            <option value="east-delhi">East Delhi</option>
+                            <option value="west-delhi">West Delhi</option>
+                            <option value="mumbai-city">Mumbai City</option>
+                            <option value="mumbai-suburban">Mumbai Suburban</option>
+                            <option value="bangalore">Bangalore Urban</option>
+                            <option value="kolkata">Kolkata</option>
+                            <option value="chennai">Chennai</option>
+                            <option value="hyderabad">Hyderabad</option>
+                            <option value="pune">Pune</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Platform (optional)</label>
+                        <div class="platform-group">
+                            <div class="radio-item">
+                                <input type="radio" id="swiggy" name="platform" value="swiggy">
+                                <label for="swiggy">Swiggy</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="zomato" name="platform" value="zomato">
+                                <label for="zomato">Zomato</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="uber" name="platform" value="uber">
+                                <label for="uber">Uber</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="ola" name="platform" value="ola">
+                                <label for="ola">Ola</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="record-section" id="recordArea">
+                        <div class="mic-icon">🎤</div>
+                        <div class="timer" id="timer">00:00</div>
+                        <button type="button" class="record-btn" id="recordBtn">
+                            Start Recording
+                        </button>
+                    </div>
+
+                    <div class="error" id="errorMsg"></div>
+                </form>
+            </div>
+
+            <div class="confirmation" id="confirmation">
+                <h2>✓ Recorded</h2>
+                <p>Your voice note has been uploaded. Thank you.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Language toggle
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Recording state
+        let mediaRecorder;
+        let chunks = [];
+        let startTime;
+        let timerInterval;
+
+        const recordBtn = document.getElementById('recordBtn');
+        const recordArea = document.getElementById('recordArea');
+        const timer = document.getElementById('timer');
+        const formView = document.getElementById('formView');
+        const confirmation = document.getElementById('confirmation');
+        const errorMsg = document.getElementById('errorMsg');
+
+        recordBtn.addEventListener('click', toggleRecording);
+
+        async function toggleRecording() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                chunks = [];
+
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = handleStop;
+
+                mediaRecorder.start();
+                startTime = Date.now();
+                
+                recordArea.classList.add('recording');
+                recordBtn.classList.add('recording');
+                recordBtn.textContent = 'Stop Recording';
+                
+                timerInterval = setInterval(updateTimer, 100);
+            } catch (err) {
+                showError('Microphone access required. Please allow microphone access.');
+            }
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            clearInterval(timerInterval);
+            
+            recordArea.classList.remove('recording');
+            recordBtn.disabled = true;
+            recordBtn.textContent = 'Uploading...';
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const secs = (elapsed % 60).toString().padStart(2, '0');
+            timer.textContent = `${mins}:${secs}`;
+        }
+
+        function handleStop() {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            uploadAudio(blob);
+        }
+
+        async function uploadAudio(blob) {
+            const formData = new FormData();
+            
+            // Backend expects: worker_secret, audio, language_hint, city_bucket, platform
+            formData.append('worker_secret', generateWorkerSecret());
+            formData.append('audio', blob, 'recording.webm');
+            formData.append('language_hint', document.querySelector('.lang-btn.active').dataset.lang);
+            
+            const city = document.getElementById('city').value;
+            if (city) {
+                formData.append('city_bucket', city);
+            }
+            
+            const platform = document.querySelector('input[name="platform"]:checked')?.value;
+            if (platform) {
+                formData.append('platform', platform);
+            }
+
+            try {
+                const response = await fetch('/ingest', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Upload failed');
+                }
+
+                const result = await response.json();
+                console.log('Uploaded grievance:', result.id);
+                
+                formView.style.display = 'none';
+                confirmation.classList.add('show');
+                
+                setTimeout(() => location.reload(), 3000);
+            } catch (err) {
+                showError(err.message);
+                recordBtn.disabled = false;
+                recordBtn.textContent = 'Start Recording';
+            }
+        }
+
+        function generateWorkerSecret() {
+            // In production: Use a real identifier (phone number hash client-side, 
+            // or session token). For demo: generate a random stable ID.
+            let secret = localStorage.getItem('worker_secret');
+            if (!secret) {
+                secret = 'worker_' + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('worker_secret', secret);
+            }
+            return secret;
+        }
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.classList.add('show');
+            setTimeout(() => errorMsg.classList.remove('show'), 5000);
+        }
+    </script>
+</body>
+</html>

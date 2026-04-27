@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strike Negotiator Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Work Sans', -apple-system, sans-serif;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+
+        .top-bar {
+            background: white;
+            border-bottom: 2px solid #ddd;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .resynth-btn {
+            background: #d93025;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .resynth-btn:hover:not(:disabled) {
+            background: #c1271f;
+        }
+
+        .resynth-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .filter-bar {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            background: white;
+            font-size: 1rem;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .metric-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .metric-card:hover {
+            border-color: #d93025;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            font-family: 'Courier Prime', monospace;
+            color: #1a1a1a;
+        }
+
+        .metric-meta {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+
+        .citation-drawer {
+            display: none;
+            background: #f9f9f9;
+            border-top: 2px solid #d93025;
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .metric-card.show-citations .citation-drawer {
+            display: block;
+        }
+
+        .citation-list {
+            font-size: 0.75rem;
+            color: #555;
+            font-family: 'Courier Prime', monospace;
+            line-height: 1.6;
+        }
+
+        .theme-list, .crossref-panel, .export-section {
+            background: white;
+            border: 1px solid #ddd;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid #ddd;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .theme-item {
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .theme-item:hover {
+            background: #fafafa;
+        }
+
+        .theme-header {
+            padding: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .theme-label {
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .theme-count {
+            background: #d93025;
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .theme-quotes {
+            display: none;
+            padding: 0 1.25rem 1.25rem 1.25rem;
+            border-top: 1px solid #eee;
+        }
+
+        .theme-item.expanded .theme-quotes {
+            display: block;
+        }
+
+        .quote {
+            background: #f9f9f9;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #d93025;
+            font-style: italic;
+            color: #555;
+        }
+
+        .finding {
+            border-bottom: 1px solid #eee;
+            padding: 1.5rem;
+        }
+
+        .finding:last-child {
+            border-bottom: none;
+        }
+
+        .finding-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: #d93025;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .comparison-side {
+            background: #f9f9f9;
+            padding: 1rem;
+            border-left: 3px solid #ddd;
+        }
+
+        .comparison-side.worker {
+            border-left-color: #d93025;
+        }
+
+        .comparison-side.company {
+            border-left-color: #888;
+        }
+
+        .comparison-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .export-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 1.25rem;
+        }
+
+        .export-btn {
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            padding: 1.25rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .export-btn:hover:not(:disabled) {
+            background: #d93025;
+        }
+
+        .export-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+
+        .spinner {
+            border: 3px solid #eee;
+            border-top: 3px solid #d93025;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 900px) {
+            .filter-bar { grid-template-columns: 1fr; }
+            .comparison { grid-template-columns: 1fr; }
+            .export-buttons { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h1>Strike Negotiator</h1>
+        <button class="resynth-btn" id="resynthBtn">⟳ Resynthesize</button>
+    </div>
+
+    <div class="container">
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>City</label>
+                <select id="cityFilter">
+                    <option value="">All Cities</option>
+                    <option value="north-delhi">North Delhi</option>
+                    <option value="south-delhi">South Delhi</option>
+                    <option value="mumbai-city">Mumbai City</option>
+                    <option value="bangalore">Bangalore</option>
+                    <option value="kolkata">Kolkata</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Platform</label>
+                <select id="platformFilter">
+                    <option value="">All Platforms</option>
+                    <option value="swiggy">Swiggy</option>
+                    <option value="zomato">Zomato</option>
+                    <option value="uber">Uber</option>
+                    <option value="ola">Ola</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Time Window</label>
+                <select id="timeFilter">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="">All Time</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="metric-strip" id="metricStrip">
+            <div class="loading"><div class="spinner"></div>Loading metrics...</div>
+        </div>
+
+        <div class="theme-list" id="themeList">
+            <div class="section-header">Themes (sorted by count)</div>
+            <div class="loading"><div class="spinner"></div>Loading themes...</div>
+        </div>
+
+        <div class="crossref-panel" id="crossrefPanel">
+            <div class="section-header">Contradictions vs Company Filings</div>
+            <div class="loading"><div class="spinner"></div>Loading findings...</div>
+        </div>
+
+        <div class="export-section">
+            <div class="section-header">Draft & Export</div>
+            <div class="export-buttons">
+                <button class="export-btn" data-kind="demand_list">Demand List</button>
+                <button class="export-btn" data-kind="press_release">Press Release</button>
+                <button class="export-btn" data-kind="brief">Brief</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSynthesis = null;
+
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+        document.getElementById('cityFilter').addEventListener('change', runSynthesis);
+        document.getElementById('platformFilter').addEventListener('change', runSynthesis);
+        document.getElementById('timeFilter').addEventListener('change', runSynthesis);
+        document.getElementById('resynthBtn').addEventListener('click', runSynthesis);
+        document.querySelectorAll('.export-btn').forEach(btn => {
+            btn.addEventListener('click', () => exportDocument(btn.dataset.kind));
+        });
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/syntheses/latest');
+                if (response.ok) {
+                    currentSynthesis = await response.json();
+                    renderDashboard(currentSynthesis);
+                } else {
+                    await runSynthesis();
+                }
+            } catch (err) {
+                console.error('Failed to load:', err);
+            }
+        }
+
+        async function runSynthesis() {
+            const btn = document.getElementById('resynthBtn');
+            btn.disabled = true;
+            btn.textContent = 'Synthesizing...';
+
+            const scope = {};
+            const city = document.getElementById('cityFilter').value;
+            const platform = document.getElementById('platformFilter').value;
+            const days = document.getElementById('timeFilter').value;
+
+            if (city) scope.city = city;
+            if (platform) scope.platform = platform;
+            if (days) scope.since = Math.floor(Date.now() / 1000) - (parseInt(days) * 86400);
+
+            try {
+                const response = await fetch('/syntheses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(scope)
+                });
+
+                if (!response.ok) throw new Error('Synthesis failed');
+                currentSynthesis = await response.json();
+                renderDashboard(currentSynthesis);
+            } catch (err) {
+                console.error('Synthesis error:', err);
+                alert('Synthesis failed.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '⟳ Resynthesize';
+            }
+        }
+
+        function renderDashboard(synthesis) {
+            const output = JSON.parse(synthesis.output_json);
+            const grievanceIds = JSON.parse(synthesis.grievance_ids);
+            renderMetrics(output.metrics || [], grievanceIds);
+            renderThemes(output.themes || []);
+            renderFindings(output.findings || []);
+        }
+
+        function renderMetrics(metrics, allIds) {
+            const container = document.getElementById('metricStrip');
+            if (metrics.length === 0) {
+                container.innerHTML = `
+                    <div class="metric-card">
+                        <div class="metric-label">Total Grievances</div>
+                        <div class="metric-value">${allIds.length}</div>
+                        <div class="metric-meta">All sources</div>
+                    </div>
+                `;
+                return;
+            }
+            container.innerHTML = metrics.map(m => `
+                <div class="metric-card" onclick="toggleCitations(this)">
+                    <div class="metric-label">${m.name}</div>
+                    <div class="metric-value">${m.value}</div>
+                    <div class="metric-meta">${m.method || ''} • n=${m.n || 0}</div>
+                    <div class="citation-drawer">
+                        <h4>Citations (${m.grievance_ids?.length || 0})</h4>
+                        <div class="citation-list">${formatIds(m.grievance_ids || [])}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderThemes(themes) {
+            const container = document.getElementById('themeList');
+            if (themes.length === 0) {
+                container.innerHTML = '<div class="section-header">Themes</div><div class="loading">No themes found.</div>';
+                return;
+            }
+            const html = themes.sort((a, b) => b.count - a.count).map(t => `
+                <div class="theme-item" onclick="toggleTheme(this)">
+                    <div class="theme-header">
+                        <div class="theme-label">${t.label}</div>
+                        <div class="theme-count">${t.count}</div>
+                    </div>
+                    <div class="theme-quotes">
+                        ${(t.quotes || []).map(q => `<div class="quote">"${q}"</div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+            container.innerHTML = `<div class="section-header">Themes (sorted by count)</div>${html}`;
+        }
+
+        function renderFindings(findings) {
+            const container = document.getElementById('crossrefPanel');
+            if (findings.length === 0) {
+                container.innerHTML = '<div class="section-header">Contradictions</div><div class="loading">No contradictions found.</div>';
+                return;
+            }
+            const html = findings.map(f => `
+                <div class="finding">
+                    <div class="finding-title">${f.title}</div>
+                    <div class="comparison">
+                        <div class="comparison-side worker">
+                            <div class="comparison-label">Worker Metric (n=${f.worker_n || 0})</div>
+                            <div>${f.worker_claim}</div>
+                        </div>
+                        <div class="comparison-side company">
+                            <div class="comparison-label">${f.filing_source}</div>
+                            <div>${f.filing_excerpt}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            container.innerHTML = `<div class="section-header">Contradictions vs Filings</div>${html}`;
+        }
+
+        function toggleTheme(el) { el.classList.toggle('expanded'); }
+        function toggleCitations(el) {
+            document.querySelectorAll('.metric-card').forEach(c => {
+                if (c !== el) c.classList.remove('show-citations');
+            });
+            el.classList.toggle('show-citations');
+        }
+
+        function formatIds(ids) {
+            const shown = ids.slice(0, 20);
+            let text = shown.join(', ');
+            if (ids.length > 20) text += `, and ${ids.length - 20} more`;
+            return text;
+        }
+
+        async function exportDocument(kind) {
+            if (!currentSynthesis) return alert('No synthesis available.');
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            try {
+                const response = await fetch('/exports', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ synthesis_id: currentSynthesis.id, kind })
+                });
+                if (!response.ok) throw new Error('Export failed');
+                const data = await response.json();
+                downloadMarkdown(data.body_md, `${kind}.md`);
+            } catch (err) {
+                alert('Export failed.');
+            } finally {
+                btn.disabled = false;
+                const labels = { demand_list: 'Demand List', press_release: 'Press Release', brief: 'Brief' };
+                btn.textContent = labels[kind];
+            }
+        }
+
+        function downloadMarkdown(content, filename) {
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
