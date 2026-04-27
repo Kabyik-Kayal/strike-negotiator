@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demand Pipeline Live</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper: #f4efe6;
+            --paper-deep: #eadfce;
+            --ink: #17130f;
+            --muted: #6f655a;
+            --line: #282018;
+            --red: #b22222;
+            --red-dark: #8f1919;
+            --gold: #f2c14e;
+            --green: #236347;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background:
+                linear-gradient(90deg, rgba(23, 19, 15, 0.035) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(23, 19, 15, 0.035) 1px, transparent 1px),
+                var(--paper);
+            background-size: 32px 32px;
+            color: var(--ink);
+            font-family: "IBM Plex Sans", system-ui, sans-serif;
+            line-height: 1.45;
+        }
+
+        .top-bar {
+            border-bottom: 4px solid var(--line);
+            background: var(--red);
+            color: #fffaf2;
+            padding: clamp(1.2rem, 4vw, 2rem) clamp(1rem, 4vw, 3rem);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1.5rem;
+            align-items: end;
+        }
+
+        .eyebrow {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.45rem;
+        }
+
+        h1 {
+            font-family: "Inter Tight", system-ui, sans-serif;
+            font-size: clamp(2.3rem, 7vw, 6.4rem);
+            line-height: 0.9;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            max-width: 980px;
+        }
+
+        button,
+        select {
+            font-family: inherit;
+        }
+
+        .resynth-btn,
+        .export-btn {
+            border: 3px solid var(--line);
+            background: var(--gold);
+            color: var(--ink);
+            cursor: pointer;
+            font: 900 0.95rem "Inter Tight", system-ui, sans-serif;
+            min-height: 3.25rem;
+            padding: 0.8rem 1.1rem;
+            text-transform: uppercase;
+        }
+
+        .resynth-btn:hover:not(:disabled),
+        .export-btn:hover:not(:disabled) {
+            background: #ffd96b;
+        }
+
+        .resynth-btn:disabled,
+        .export-btn:disabled {
+            cursor: wait;
+            opacity: 0.65;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: clamp(1rem, 4vw, 2rem);
+        }
+
+        .status-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: space-between;
+            border: 3px solid var(--line);
+            background: #fff8ea;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .identity-banner {
+            border: 3px solid var(--line);
+            background: var(--paper-deep);
+            padding: 0.85rem 1rem;
+            margin-bottom: 1rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .filter-bar {
+            border: 3px solid var(--line);
+            background: #fff8ea;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group label {
+            display: block;
+            font-weight: 900;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            font-family: "Inter Tight", system-ui, sans-serif;
+        }
+
+        .filter-group select {
+            width: 100%;
+            min-height: 3rem;
+            border: 2px solid var(--line);
+            background: var(--paper);
+            color: var(--ink);
+            font-size: 1rem;
+            padding: 0.7rem 0.8rem;
+        }
+
+        .signal-grid {
+            display: grid;
+            grid-template-columns: minmax(280px, 0.85fr) minmax(360px, 1.15fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-strip {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .metric-card,
+        .panel {
+            border: 3px solid var(--line);
+            background: #fff8ea;
+        }
+
+        .metric-card {
+            cursor: pointer;
+            padding: 1rem;
+        }
+
+        .metric-card.primary {
+            background: var(--ink);
+            color: #fffaf2;
+        }
+
+        .metric-label {
+            color: inherit;
+            font: 900 0.85rem "Inter Tight", system-ui, sans-serif;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+
+        .metric-value {
+            font: 900 clamp(3rem, 10vw, 7.5rem) "Inter Tight", system-ui, sans-serif;
+            line-height: 0.85;
+            color: var(--red);
+            letter-spacing: 0;
+        }
+
+        .metric-card.primary .metric-value {
+            color: var(--gold);
+        }
+
+        .metric-meta {
+            margin-top: 0.75rem;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .metric-card.primary .metric-meta {
+            color: #d9cab8;
+        }
+
+        .citation-drawer {
+            display: none;
+            border-top: 2px solid currentColor;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            max-height: 180px;
+            overflow-y: auto;
+            font-size: 0.78rem;
+            word-break: break-word;
+        }
+
+        .metric-card.show-citations .citation-drawer {
+            display: block;
+        }
+
+        .panel-header {
+            border-bottom: 3px solid var(--line);
+            background: var(--paper-deep);
+            padding: 0.95rem 1rem;
+            font: 900 1.2rem "Inter Tight", system-ui, sans-serif;
+            text-transform: uppercase;
+        }
+
+        .panel-body {
+            padding: 1rem;
+        }
+
+        .crossref-panel {
+            min-height: 100%;
+        }
+
+        .finding {
+            border-bottom: 2px solid var(--line);
+            padding: 1rem 0;
+        }
+
+        .finding:first-child {
+            padding-top: 0;
+        }
+
+        .finding:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .finding-title {
+            color: var(--red);
+            font: 900 clamp(1.4rem, 4vw, 2.6rem) "Inter Tight", system-ui, sans-serif;
+            line-height: 1;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .comparison-side {
+            border: 2px solid var(--line);
+            background: var(--paper);
+            padding: 0.85rem;
+        }
+
+        .comparison-label {
+            color: var(--muted);
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 0.35rem;
+        }
+
+        .theme-list,
+        .export-section {
+            margin-bottom: 1rem;
+        }
+
+        .theme-item {
+            border-bottom: 2px solid var(--line);
+            cursor: pointer;
+        }
+
+        .theme-item:last-child {
+            border-bottom: 0;
+        }
+
+        .theme-header {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .theme-label {
+            font-weight: 800;
+        }
+
+        .theme-count {
+            background: var(--red);
+            color: #fffaf2;
+            border: 2px solid var(--line);
+            font: 900 1rem "Inter Tight", system-ui, sans-serif;
+            min-width: 3.2rem;
+            padding: 0.25rem 0.5rem;
+            text-align: center;
+        }
+
+        .theme-quotes {
+            display: none;
+            border-top: 2px solid var(--line);
+            padding: 1rem;
+            background: var(--paper);
+        }
+
+        .theme-item.expanded .theme-quotes {
+            display: block;
+        }
+
+        .quote {
+            border-left: 5px solid var(--red);
+            padding: 0.5rem 0 0.5rem 0.8rem;
+            margin-bottom: 0.75rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .export-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            padding: 1rem;
+        }
+
+        .loading {
+            color: var(--muted);
+            font-weight: 700;
+            padding: 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .top-bar,
+            .signal-grid,
+            .filter-bar,
+            .comparison,
+            .export-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div>
+            <div class="eyebrow">Demand pipeline · live</div>
+            <h1>What workers say. What companies file.</h1>
+        </div>
+        <button class="resynth-btn" id="resynthBtn">Resynthesize</button>
+    </div>
+
+    <div class="container">
+        <div class="status-strip">
+            <span id="pollStatus">Polling latest synthesis every 5 seconds</span>
+            <span id="lastUpdated">No synthesis loaded</span>
+        </div>
+
+        <div class="identity-banner">
+            Demo submissions without a phone number use browser IDs. Treat repeat-worker metrics as unverified unless the phone field was used.
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="cityFilter">City</label>
+                <select id="cityFilter"></select>
+            </div>
+            <div class="filter-group">
+                <label for="platformFilter">Platform</label>
+                <select id="platformFilter"></select>
+            </div>
+            <div class="filter-group">
+                <label for="timeFilter">Time Window</label>
+                <select id="timeFilter">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="">All Time</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="signal-grid">
+            <div class="metric-strip" id="metricStrip">
+                <div class="loading">Loading metrics...</div>
+            </div>
+
+            <div class="panel crossref-panel" id="crossrefPanel">
+                <div class="panel-header">Company contradiction</div>
+                <div class="panel-body loading">Loading findings...</div>
+            </div>
+        </div>
+
+        <div class="panel theme-list" id="themeList">
+            <div class="panel-header">What people are saying</div>
+            <div class="panel-body loading">Loading themes...</div>
+        </div>
+
+        <div class="panel export-section">
+            <div class="panel-header">Draft and export</div>
+            <div class="export-buttons">
+                <button class="export-btn" data-kind="demand_list">Demand List</button>
+                <button class="export-btn" data-kind="press_release">Press Release</button>
+                <button class="export-btn" data-kind="brief">Brief</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSynthesis = null;
+        let metadata = { cities: [], platforms: [] };
+        let polling = null;
+        let isSynthesizing = false;
+
+        document.addEventListener('DOMContentLoaded', init);
+        document.getElementById('cityFilter').addEventListener('change', runSynthesis);
+        document.getElementById('platformFilter').addEventListener('change', runSynthesis);
+        document.getElementById('timeFilter').addEventListener('change', runSynthesis);
+        document.getElementById('resynthBtn').addEventListener('click', runSynthesis);
+        document.querySelectorAll('.export-btn').forEach(btn => {
+            btn.addEventListener('click', () => exportDocument(btn, btn.dataset.kind));
+        });
+
+        async function init() {
+            await loadMetadata();
+            populateFilters();
+            await loadDashboard();
+            polling = setInterval(pollLatestSynthesis, 5000);
+        }
+
+        async function loadMetadata() {
+            const response = await fetch('/metadata');
+            if (!response.ok) throw new Error('Metadata failed');
+            metadata = await response.json();
+        }
+
+        function populateFilters() {
+            document.getElementById('cityFilter').innerHTML = '<option value="">All Cities</option>' +
+                metadata.cities.map(city => `<option value="${escapeHtml(city.value)}">${escapeHtml(city.label_en)}</option>`).join('');
+
+            document.getElementById('platformFilter').innerHTML = '<option value="">All Platforms</option>' +
+                metadata.platforms.map(platform => `<option value="${escapeHtml(platform.value)}">${escapeHtml(platform.label_en)}</option>`).join('');
+        }
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/syntheses/latest');
+                if (response.ok) {
+                    currentSynthesis = await response.json();
+                    renderDashboard(currentSynthesis);
+                } else {
+                    await runSynthesis();
+                }
+            } catch (err) {
+                console.error('Failed to load dashboard:', err);
+            }
+        }
+
+        async function pollLatestSynthesis() {
+            if (isSynthesizing) return;
+            try {
+                const response = await fetch('/syntheses/latest', { cache: 'no-store' });
+                if (!response.ok) return;
+                const latest = await response.json();
+                if (!currentSynthesis || latest.id !== currentSynthesis.id) {
+                    currentSynthesis = latest;
+                    renderDashboard(latest);
+                }
+            } catch (err) {
+                console.warn('Polling failed:', err);
+            }
+        }
+
+        async function runSynthesis() {
+            const btn = document.getElementById('resynthBtn');
+            btn.disabled = true;
+            btn.textContent = 'Synthesizing';
+            isSynthesizing = true;
+
+            const scope = {};
+            const city = document.getElementById('cityFilter').value;
+            const platform = document.getElementById('platformFilter').value;
+            const days = document.getElementById('timeFilter').value;
+
+            if (city) scope.city = city;
+            if (platform) scope.platform = platform;
+            if (days) scope.since = Math.floor(Date.now() / 1000) - (parseInt(days, 10) * 86400);
+
+            try {
+                const response = await fetch('/syntheses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(scope)
+                });
+
+                if (!response.ok) throw new Error('Synthesis failed');
+                currentSynthesis = await response.json();
+                renderDashboard(currentSynthesis);
+            } catch (err) {
+                console.error('Synthesis error:', err);
+                document.getElementById('pollStatus').textContent = 'Synthesis failed';
+            } finally {
+                isSynthesizing = false;
+                btn.disabled = false;
+                btn.textContent = 'Resynthesize';
+            }
+        }
+
+        function renderDashboard(synthesis) {
+            const output = JSON.parse(synthesis.output_json);
+            const grievanceIds = JSON.parse(synthesis.grievance_ids);
+            renderMetrics(output.metrics || [], grievanceIds);
+            renderFindings(output.findings || []);
+            renderThemes(output.themes || []);
+            document.getElementById('lastUpdated').textContent = `Last synthesis: ${new Date(synthesis.created_at * 1000).toLocaleTimeString()}`;
+            document.getElementById('pollStatus').textContent = 'Polling latest synthesis every 5 seconds';
+        }
+
+        function renderMetrics(metrics, allIds) {
+            const container = document.getElementById('metricStrip');
+            if (metrics.length === 0) {
+                container.innerHTML = `
+                    <div class="metric-card primary">
+                        <div class="metric-label">Total grievances</div>
+                        <div class="metric-value">${allIds.length}</div>
+                        <div class="metric-meta">All cited worker voice notes in this synthesis</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = metrics.map((metric, index) => `
+                <div class="metric-card ${index === 0 ? 'primary' : ''}" onclick="toggleCitations(this)">
+                    <div class="metric-label">${escapeHtml(metric.name)}</div>
+                    <div class="metric-value">${escapeHtml(String(metric.value))}</div>
+                    <div class="metric-meta">${escapeHtml(metric.method || '')} · n=${escapeHtml(String(metric.n || 0))}</div>
+                    <div class="citation-drawer">
+                        <strong>Citations (${metric.grievance_ids?.length || 0})</strong>
+                        <div>${formatIds(metric.grievance_ids || [])}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderThemes(themes) {
+            const container = document.getElementById('themeList');
+            if (themes.length === 0) {
+                container.innerHTML = '<div class="panel-header">What people are saying</div><div class="panel-body loading">No themes found.</div>';
+                return;
+            }
+
+            const html = themes.sort((a, b) => b.count - a.count).map(theme => `
+                <div class="theme-item" onclick="toggleTheme(this)">
+                    <div class="theme-header">
+                        <div class="theme-label">${escapeHtml(theme.label)}</div>
+                        <div class="theme-count">${escapeHtml(String(theme.count))}</div>
+                    </div>
+                    <div class="theme-quotes">
+                        ${(theme.quotes || []).map(quote => `<div class="quote">"${escapeHtml(quote)}"</div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+            container.innerHTML = `<div class="panel-header">What people are saying</div>${html}`;
+        }
+
+        function renderFindings(findings) {
+            const container = document.getElementById('crossrefPanel');
+            if (findings.length === 0) {
+                container.innerHTML = '<div class="panel-header">Company contradiction</div><div class="panel-body loading">No filing contradiction yet.</div>';
+                return;
+            }
+
+            const html = findings.slice(0, 3).map(finding => {
+                const verdict = finding.verdict || 'finding';
+                const title = verdict === 'contradiction' ? 'Contradiction found' : `${verdict} noted`;
+                return `
+                    <div class="finding">
+                        <div class="finding-title">${escapeHtml(title)}</div>
+                        <div class="comparison">
+                            <div class="comparison-side">
+                                <div class="comparison-label">Worker metric</div>
+                                <div>${escapeHtml(finding.worker_metric || 'No worker metric available.')}</div>
+                            </div>
+                            <div class="comparison-side">
+                                <div class="comparison-label">${escapeHtml(finding.filing_chunk_id || 'Filing')}</div>
+                                <div>${escapeHtml(finding.filing_excerpt || 'No matching excerpt.')}</div>
+                            </div>
+                        </div>
+                        <p style="margin-top: 0.75rem;">${escapeHtml(finding.summary || '')}</p>
+                    </div>
+                `;
+            }).join('');
+            container.innerHTML = `<div class="panel-header">Company contradiction</div><div class="panel-body">${html}</div>`;
+        }
+
+        function toggleTheme(el) {
+            el.classList.toggle('expanded');
+        }
+
+        function toggleCitations(el) {
+            document.querySelectorAll('.metric-card').forEach(card => {
+                if (card !== el) card.classList.remove('show-citations');
+            });
+            el.classList.toggle('show-citations');
+        }
+
+        function formatIds(ids) {
+            const shown = ids.slice(0, 20).map(escapeHtml);
+            let text = shown.join(', ');
+            if (ids.length > 20) text += `, and ${ids.length - 20} more`;
+            return text;
+        }
+
+        async function exportDocument(btn, kind) {
+            if (!currentSynthesis) {
+                document.getElementById('pollStatus').textContent = 'No synthesis available';
+                return;
+            }
+
+            const originalLabel = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Generating';
+            try {
+                const response = await fetch('/exports', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ synthesis_id: currentSynthesis.id, kind })
+                });
+                if (!response.ok) throw new Error('Export failed');
+                const data = await response.json();
+                downloadMarkdown(data.body_md, `${kind}.md`);
+            } catch (err) {
+                document.getElementById('pollStatus').textContent = 'Export failed';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalLabel;
+            }
+        }
+
+        function downloadMarkdown(content, filename) {
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+    </script>
+</body>
+</html>

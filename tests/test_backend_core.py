@@ -108,6 +108,26 @@ def test_grievance_read_omits_private_fields(tmp_path, monkeypatch):
     assert "audio_path" not in detail_response.json()
 
 
+def test_frontend_routes_and_metadata_are_served(tmp_path, monkeypatch):
+    configure_test_database(tmp_path, monkeypatch)
+    client = TestClient(app)
+
+    form_response = client.get("/")
+    dashboard_response = client.get("/dashboard")
+    metadata_response = client.get("/metadata")
+
+    assert form_response.status_code == 200
+    assert dashboard_response.status_code == 200
+    assert metadata_response.status_code == 200
+
+    metadata = metadata_response.json()
+    city_values = [city["value"] for city in metadata["cities"]]
+
+    assert "Bengaluru Urban" in city_values
+    assert "Mumbai Suburban" in city_values
+    assert "north-delhi" not in city_values
+
+
 def test_text_ingest_requires_explicit_source(tmp_path, monkeypatch):
     configure_test_database(tmp_path, monkeypatch)
     client = TestClient(app)

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record a Grievance</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper: #f4efe6;
+            --paper-deep: #eadfce;
+            --ink: #17130f;
+            --muted: #6f655a;
+            --line: #282018;
+            --red: #b22222;
+            --red-dark: #8f1919;
+            --gold: #f2c14e;
+            --green: #236347;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                linear-gradient(90deg, rgba(23, 19, 15, 0.04) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(23, 19, 15, 0.035) 1px, transparent 1px),
+                var(--paper);
+            background-size: 28px 28px;
+            color: var(--ink);
+            font-family: "IBM Plex Sans", system-ui, sans-serif;
+        }
+
+        header {
+            border-bottom: 3px solid var(--line);
+            background: var(--paper);
+            padding: 1rem clamp(1rem, 4vw, 3rem);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .masthead {
+            font-family: "Inter Tight", system-ui, sans-serif;
+            font-weight: 900;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            font-size: clamp(1.2rem, 3vw, 2rem);
+        }
+
+        .lang-toggle {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            border: 2px solid var(--line);
+            background: var(--paper-deep);
+        }
+
+        .lang-btn {
+            min-width: 6rem;
+            border: 0;
+            border-right: 2px solid var(--line);
+            background: transparent;
+            color: var(--ink);
+            cursor: pointer;
+            font: 800 0.9rem "Inter Tight", system-ui, sans-serif;
+            padding: 0.65rem 0.9rem;
+        }
+
+        .lang-btn:last-child {
+            border-right: 0;
+        }
+
+        .lang-btn.active {
+            background: var(--red);
+            color: #fffaf2;
+        }
+
+        main {
+            min-height: calc(100vh - 74px);
+            display: grid;
+            place-items: center;
+            padding: clamp(1.25rem, 4vw, 4rem);
+        }
+
+        .container {
+            width: min(100%, 720px);
+        }
+
+        .poster {
+            border: 4px solid var(--line);
+            background: #fff8ea;
+            box-shadow: 10px 10px 0 var(--line);
+        }
+
+        .poster-header {
+            border-bottom: 4px solid var(--line);
+            padding: clamp(1.25rem, 4vw, 2rem);
+            background: var(--red);
+            color: #fffaf2;
+        }
+
+        .eyebrow {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.35rem;
+        }
+
+        h1 {
+            font-family: "Inter Tight", system-ui, sans-serif;
+            font-size: clamp(2.2rem, 9vw, 5rem);
+            line-height: 0.9;
+            letter-spacing: 0;
+            text-transform: uppercase;
+        }
+
+        form {
+            padding: clamp(1.25rem, 4vw, 2rem);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            color: var(--ink);
+            font-weight: 800;
+            margin-bottom: 0.45rem;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 0.88rem;
+            margin-top: 0.4rem;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 3rem;
+            border: 2px solid var(--line);
+            background: var(--paper);
+            color: var(--ink);
+            font: 500 1rem "IBM Plex Sans", system-ui, sans-serif;
+            padding: 0.75rem 0.85rem;
+        }
+
+        input:focus,
+        select:focus {
+            outline: 3px solid var(--gold);
+            outline-offset: 2px;
+        }
+
+        .platform-group {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.65rem;
+        }
+
+        .radio-item {
+            position: relative;
+        }
+
+        .radio-item input {
+            opacity: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .radio-item label {
+            border: 2px solid var(--line);
+            background: var(--paper);
+            cursor: pointer;
+            margin: 0;
+            min-height: 3rem;
+            display: grid;
+            place-items: center;
+            text-align: center;
+        }
+
+        .radio-item input:checked + label {
+            background: var(--ink);
+            color: #fffaf2;
+        }
+
+        .record-section {
+            border-top: 4px solid var(--line);
+            background: var(--paper-deep);
+            padding: clamp(1.5rem, 4vw, 2.25rem);
+            text-align: center;
+        }
+
+        .record-section.recording {
+            background: #f7d9d4;
+        }
+
+        .mic-icon {
+            width: 4.5rem;
+            height: 4.5rem;
+            color: var(--red);
+            margin-bottom: 0.75rem;
+        }
+
+        .record-section.recording .mic-icon {
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .timer {
+            display: none;
+            font: 900 clamp(2.25rem, 8vw, 4.5rem) "Inter Tight", system-ui, sans-serif;
+            color: var(--red);
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 0.75rem;
+        }
+
+        .record-section.recording .timer {
+            display: block;
+        }
+
+        .record-btn,
+        .secondary-btn {
+            border: 3px solid var(--line);
+            background: var(--red);
+            color: #fffaf2;
+            cursor: pointer;
+            font: 900 1rem "Inter Tight", system-ui, sans-serif;
+            min-height: 3.35rem;
+            padding: 0.8rem 1.4rem;
+            text-transform: uppercase;
+        }
+
+        .record-btn:hover:not(:disabled),
+        .secondary-btn:hover {
+            background: var(--red-dark);
+        }
+
+        .record-btn.recording {
+            background: var(--ink);
+        }
+
+        .record-btn:disabled {
+            cursor: wait;
+            opacity: 0.65;
+        }
+
+        .confirmation,
+        .error {
+            display: none;
+            border: 4px solid var(--line);
+            background: #fff8ea;
+            box-shadow: 10px 10px 0 var(--line);
+            padding: clamp(1.5rem, 4vw, 2rem);
+            text-align: center;
+        }
+
+        .confirmation.show,
+        .error.show {
+            display: block;
+        }
+
+        .confirmation h2 {
+            color: var(--green);
+            font: 900 clamp(2rem, 7vw, 4rem) "Inter Tight", system-ui, sans-serif;
+            line-height: 0.95;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .confirmation p {
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        .error {
+            margin-top: 1rem;
+            border-color: var(--red);
+            color: var(--red-dark);
+            box-shadow: none;
+            text-align: left;
+        }
+
+        @media (max-width: 680px) {
+            header {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .form-grid,
+            .platform-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="masthead">Strike Negotiator</div>
+        <div class="lang-toggle" aria-label="Language">
+            <button class="lang-btn active" type="button" data-lang="en" aria-pressed="true">English</button>
+            <button class="lang-btn" type="button" data-lang="hi" aria-pressed="false">हिन्दी</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div id="formView" class="poster">
+                <div class="poster-header">
+                    <div class="eyebrow" data-i18n="eyebrow">Voice note intake</div>
+                    <h1 data-i18n="headline">Speak. Be counted.</h1>
+                </div>
+
+                <form id="voiceForm">
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label for="phone" data-i18n="phoneLabel">Phone number (optional)</label>
+                            <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" data-i18n-placeholder="phonePlaceholder" placeholder="Used only to connect repeat grievances">
+                            <p class="hint" data-i18n="phoneHint">Never stored. If blank, this browser is treated as a demo worker and repeat-worker metrics are unverified.</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="city" data-i18n="cityLabel">District</label>
+                            <select id="city" name="city"></select>
+                        </div>
+
+                        <div class="form-group">
+                            <label data-i18n="platformLabel">Platform</label>
+                            <div class="platform-group" id="platformGroup"></div>
+                        </div>
+                    </div>
+
+                    <div class="record-section" id="recordArea">
+                        <svg class="mic-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M12 15a4 4 0 0 0 4-4V5a4 4 0 0 0-8 0v6a4 4 0 0 0 4 4Zm-2-4V5a2 2 0 0 1 4 0v6a2 2 0 0 1-4 0Zm8-1a1 1 0 1 1 2 0 8 8 0 0 1-7 7.94V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-3.06A8 8 0 0 1 4 10a1 1 0 1 1 2 0 6 6 0 0 0 12 0Z"/>
+                        </svg>
+                        <div class="timer" id="timer">00:00</div>
+                        <button type="button" class="record-btn" id="recordBtn" data-i18n="startRecording">Start recording</button>
+                    </div>
+
+                    <div class="error" id="errorMsg"></div>
+                </form>
+            </div>
+
+            <div class="confirmation" id="confirmation">
+                <h2 data-i18n="recordedTitle">Recorded</h2>
+                <p id="confirmationCopy" data-i18n="recordedCopy">Your voice note has been uploaded. Thank you.</p>
+                <button type="button" class="secondary-btn" id="recordAnotherBtn" data-i18n="recordAnother">Record another</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const strings = {
+            en: {
+                eyebrow: 'Voice note intake',
+                headline: 'Speak. Be counted.',
+                phoneLabel: 'Phone number (optional)',
+                phonePlaceholder: 'Used only to connect repeat grievances',
+                phoneHint: 'Never stored. If blank, this browser is treated as a demo worker and repeat-worker metrics are unverified.',
+                cityLabel: 'District',
+                selectDistrict: 'Select district',
+                platformLabel: 'Platform',
+                startRecording: 'Start recording',
+                stopRecording: 'Stop recording',
+                uploading: 'Uploading',
+                recordedTitle: 'Recorded',
+                recordedCopy: 'Your voice note has been uploaded. Thank you.',
+                recordedDemoCopy: 'Uploaded with a browser demo ID. Worker-repeat metrics for this note are unverified.',
+                recordAnother: 'Record another',
+                micError: 'Microphone access is required. Please allow microphone access.',
+                uploadFailed: 'Upload failed.'
+            },
+            hi: {
+                eyebrow: 'आवाज़ नोट इनटेक',
+                headline: 'बोलिए. गिनती में आइए.',
+                phoneLabel: 'फ़ोन नंबर (वैकल्पिक)',
+                phonePlaceholder: 'बार-बार आई शिकायतों को जोड़ने के लिए',
+                phoneHint: 'यह कभी सेव नहीं होता. खाली छोड़ने पर यह ब्राउज़र डेमो वर्कर माना जाएगा और repeat-worker metrics अपुष्ट रहेंगी.',
+                cityLabel: 'ज़िला',
+                selectDistrict: 'ज़िला चुनें',
+                platformLabel: 'प्लैटफ़ॉर्म',
+                startRecording: 'रिकॉर्डिंग शुरू करें',
+                stopRecording: 'रिकॉर्डिंग रोकें',
+                uploading: 'अपलोड हो रहा है',
+                recordedTitle: 'रिकॉर्ड हो गया',
+                recordedCopy: 'आपकी आवाज़ नोट अपलोड हो गई. धन्यवाद.',
+                recordedDemoCopy: 'ब्राउज़र डेमो ID से अपलोड हुआ. इस नोट के repeat-worker metrics अपुष्ट हैं.',
+                recordAnother: 'एक और रिकॉर्ड करें',
+                micError: 'माइक्रोफ़ोन की अनुमति चाहिए. कृपया अनुमति दें.',
+                uploadFailed: 'अपलोड नहीं हो पाया.'
+            }
+        };
+
+        let metadata = { cities: [], platforms: [] };
+        let currentLang = localStorage.getItem('ui_language') || 'en';
+        let mediaRecorder;
+        let chunks = [];
+        let startTime;
+        let timerInterval;
+
+        const recordBtn = document.getElementById('recordBtn');
+        const recordArea = document.getElementById('recordArea');
+        const timer = document.getElementById('timer');
+        const formView = document.getElementById('formView');
+        const confirmation = document.getElementById('confirmation');
+        const confirmationCopy = document.getElementById('confirmationCopy');
+        const errorMsg = document.getElementById('errorMsg');
+        const citySelect = document.getElementById('city');
+        const platformGroup = document.getElementById('platformGroup');
+        const phoneInput = document.getElementById('phone');
+
+        document.addEventListener('DOMContentLoaded', init);
+        recordBtn.addEventListener('click', toggleRecording);
+        document.getElementById('recordAnotherBtn').addEventListener('click', resetForAnother);
+
+        async function init() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+            });
+            await loadMetadata();
+            setLanguage(currentLang, false);
+        }
+
+        async function loadMetadata() {
+            const response = await fetch('/metadata');
+            if (!response.ok) throw new Error('Metadata failed');
+            metadata = await response.json();
+        }
+
+        function t(key) {
+            return strings[currentLang][key] || strings.en[key] || key;
+        }
+
+        function setLanguage(lang, persist = true) {
+            currentLang = lang;
+            if (persist) localStorage.setItem('ui_language', lang);
+            document.documentElement.lang = lang;
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                const active = btn.dataset.lang === lang;
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-pressed', String(active));
+            });
+
+            document.querySelectorAll('[data-i18n]').forEach(node => {
+                node.textContent = t(node.dataset.i18n);
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(node => {
+                node.setAttribute('placeholder', t(node.dataset.i18nPlaceholder));
+            });
+            populateOptions();
+            setRecordButtonState(mediaRecorder?.state === 'recording' ? 'recording' : recordBtn.disabled ? 'uploading' : 'idle');
+        }
+
+        function populateOptions() {
+            const selectedCity = citySelect.value;
+            citySelect.innerHTML = `<option value="">${t('selectDistrict')}</option>` + metadata.cities.map(city => {
+                const label = currentLang === 'hi' ? city.label_hi : city.label_en;
+                return `<option value="${city.value}">${label}</option>`;
+            }).join('');
+            citySelect.value = selectedCity;
+
+            const selectedPlatform = document.querySelector('input[name="platform"]:checked')?.value || '';
+            platformGroup.innerHTML = metadata.platforms.map(platform => {
+                const label = currentLang === 'hi' ? platform.label_hi : platform.label_en;
+                return `
+                    <div class="radio-item">
+                        <input type="radio" id="platform-${platform.value}" name="platform" value="${platform.value}">
+                        <label for="platform-${platform.value}">${label}</label>
+                    </div>
+                `;
+            }).join('');
+            if (selectedPlatform) {
+                const restored = document.querySelector(`input[name="platform"][value="${selectedPlatform}"]`);
+                if (restored) restored.checked = true;
+            }
+        }
+
+        async function toggleRecording() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                chunks = [];
+
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = handleStop;
+
+                mediaRecorder.start();
+                startTime = Date.now();
+
+                recordArea.classList.add('recording');
+                recordBtn.classList.add('recording');
+                setRecordButtonState('recording');
+                timerInterval = setInterval(updateTimer, 100);
+            } catch (err) {
+                showError(t('micError'));
+            }
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            clearInterval(timerInterval);
+
+            recordArea.classList.remove('recording');
+            recordBtn.classList.remove('recording');
+            recordBtn.disabled = true;
+            setRecordButtonState('uploading');
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const secs = (elapsed % 60).toString().padStart(2, '0');
+            timer.textContent = `${mins}:${secs}`;
+        }
+
+        function handleStop() {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            uploadAudio(blob);
+        }
+
+        async function uploadAudio(blob) {
+            const phone = phoneInput.value.trim();
+            const usedDemoSecret = phone.length === 0;
+            const formData = new FormData();
+
+            formData.append('worker_secret', phone || getBrowserDemoSecret());
+            formData.append('audio', blob, 'recording.webm');
+            formData.append('language_hint', currentLang);
+
+            if (citySelect.value) formData.append('city_bucket', citySelect.value);
+            const platform = document.querySelector('input[name="platform"]:checked')?.value;
+            if (platform) formData.append('platform', platform);
+
+            try {
+                const response = await fetch('/ingest', { method: 'POST', body: formData });
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || t('uploadFailed'));
+                }
+
+                formView.style.display = 'none';
+                confirmation.classList.add('show');
+                confirmationCopy.dataset.i18n = usedDemoSecret ? 'recordedDemoCopy' : 'recordedCopy';
+                confirmationCopy.textContent = usedDemoSecret ? t('recordedDemoCopy') : t('recordedCopy');
+                triggerSynthesis();
+            } catch (err) {
+                showError(err.message);
+                recordBtn.disabled = false;
+                setRecordButtonState('idle');
+            }
+        }
+
+        async function triggerSynthesis() {
+            try {
+                await fetch('/syntheses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+            } catch (err) {
+                console.warn('Background synthesis failed:', err);
+            }
+        }
+
+        function getBrowserDemoSecret() {
+            let secret = localStorage.getItem('demo_worker_secret');
+            if (!secret) {
+                secret = 'demo_browser_' + Math.random().toString(36).slice(2, 15);
+                localStorage.setItem('demo_worker_secret', secret);
+            }
+            return secret;
+        }
+
+        function setRecordButtonState(state) {
+            const labels = {
+                idle: t('startRecording'),
+                recording: t('stopRecording'),
+                uploading: t('uploading')
+            };
+            recordBtn.textContent = labels[state];
+        }
+
+        function resetForAnother() {
+            confirmation.classList.remove('show');
+            formView.style.display = 'block';
+            errorMsg.classList.remove('show');
+            timer.textContent = '00:00';
+            recordBtn.disabled = false;
+            setRecordButtonState('idle');
+        }
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.classList.add('show');
+            setTimeout(() => errorMsg.classList.remove('show'), 5000);
+        }
+    </script>
+</body>
+</html>

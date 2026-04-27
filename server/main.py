@@ -1,10 +1,14 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
+from server.constants import CITY_BUCKETS, PLATFORMS
 from server.db import get_session, init_db
 from server.ingest import create_audio_grievance, create_text_grievance
 from server.models import Export, FilingChunk, Grievance, Synthesis
@@ -30,11 +34,28 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Strike Negotiator", version="0.1.0", lifespan=lifespan)
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+
+@app.get("/", include_in_schema=False)
+def worker_form() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "form.html")
+
+
+@app.get("/dashboard", include_in_schema=False)
+def dashboard() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/metadata")
+def metadata() -> dict[str, list[dict[str, str]]]:
+    return {"cities": CITY_BUCKETS, "platforms": PLATFORMS}
 
 
 @app.post("/ingest/text", response_model=IngestResponse, status_code=201)
@@ -187,4 +208,3 @@ def run() -> None:
     import uvicorn
 
     uvicorn.run("server.main:app", host="127.0.0.1", port=8000, reload=True)
-

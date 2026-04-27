@@ -50,6 +50,9 @@ curl http://127.0.0.1:8000/health
 
 ## Useful endpoints
 
+- `GET /` serves the worker voice-note form.
+- `GET /dashboard` serves the organizer dashboard.
+- `GET /metadata` returns the canonical city and platform lists used by the UI.
 - `POST /ingest/text` stores a transcript directly. Use this for synthetic data
   and backend tests. The `source` field is required so real grievances are not
   silently mislabeled as synthetic.
