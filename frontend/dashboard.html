@@ -3,665 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strike Negotiator Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Strike Negotiator — Dashboard</title>
+    <link rel="stylesheet" href="/static/shared.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paper: { DEFAULT: "#f4ead7", soft: "#fff7ec", deep: "#e7d5b8" },
+                        ink: "#1f140e",
+                        muted: "#6f5849",
+                        frame: "#2b1b14",
+                        crimson: { DEFAULT: "#b22222", dark: "#8d1818" },
+                        gold: "#f0b74a",
+                    },
+                    fontFamily: {
+                        heading: ['"Space Grotesk"', "system-ui", "sans-serif"],
+                        sans: ['"Inter"', "system-ui", "sans-serif"],
+                    },
+                    boxShadow: { brutal: "8px 8px 0 #2b1b14" },
+                    borderWidth: { "3": "3px" },
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --paper: #f4ead7;
-            --paper-soft: #fff7ec;
-            --paper-deep: #e7d5b8;
-            --ink: #1f140e;
-            --muted: #6f5849;
-            --border: #2b1b14;
-            --red: #b22222;
-            --red-dark: #8d1818;
-            --gold: #f0b74a;
-            --green: #245f47;
-            --shadow: 10px 10px 0 var(--border);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            min-height: 100vh;
-            background:
-                linear-gradient(90deg, rgba(31, 20, 14, 0.04) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(31, 20, 14, 0.035) 1px, transparent 1px),
-                radial-gradient(circle at top right, rgba(178, 34, 34, 0.14), transparent 30%),
-                var(--paper);
-            background-size: 30px 30px, 30px 30px, auto, auto;
-            color: var(--ink);
-            font-family: "IBM Plex Sans", system-ui, sans-serif;
-        }
-
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        .topbar {
-            border-bottom: 4px solid var(--border);
-            padding: 1rem clamp(1rem, 3vw, 2.25rem);
-            display: flex;
-            justify-content: space-between;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .brand {
-            display: block;
-            font-family: "Archivo Expanded", system-ui, sans-serif;
-            font-size: clamp(1rem, 3vw, 1.55rem);
-            line-height: 1;
-            text-transform: uppercase;
-        }
-
-        .subtitle {
-            margin-top: 0.42rem;
-            color: var(--muted);
-            font-size: 0.92rem;
-            font-weight: 600;
-        }
-
-        .topbar-actions {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-
-        .nav-link,
-        .action-btn,
-        .export-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.55rem;
-            min-height: 3rem;
-            border: 3px solid var(--border);
-            font: 700 0.95rem "IBM Plex Sans", system-ui, sans-serif;
-            padding: 0.75rem 1rem;
-            transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
-        }
-
-        .nav-link {
-            background: var(--paper-soft);
-        }
-
-        .action-btn {
-            background: var(--gold);
-            text-transform: uppercase;
-        }
-
-        .export-btn {
-            background: var(--ink);
-            color: #fff7ef;
-            width: 100%;
-        }
-
-        .nav-link:hover,
-        .action-btn:hover:not(:disabled),
-        .export-btn:hover:not(:disabled) {
-            transform: translateY(-1px);
-        }
-
-        .action-btn:disabled,
-        .export-btn:disabled {
-            opacity: 0.65;
-            cursor: wait;
-        }
-
-        .shell {
-            width: min(1360px, 100%);
-            margin: 0 auto;
-            padding: clamp(1rem, 3vw, 2rem);
-            display: grid;
-            gap: 1rem;
-        }
-
-        .panel {
-            border: 4px solid var(--border);
-            background: var(--paper-soft);
-            box-shadow: var(--shadow);
-        }
-
-        .masthead {
-            display: grid;
-            grid-template-columns: minmax(320px, 1.15fr) minmax(280px, 0.85fr);
-            gap: 1rem;
-        }
-
-        .hero {
-            overflow: hidden;
-        }
-
-        .hero-banner {
-            border-bottom: 4px solid var(--border);
-            background: var(--red);
-            color: #fff7ef;
-            padding: clamp(1.2rem, 3vw, 2rem);
-        }
-
-        .eyebrow {
-            font-size: 0.82rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-        }
-
-        .hero-banner h1 {
-            font-family: "Archivo Expanded", system-ui, sans-serif;
-            font-size: clamp(2rem, 6vw, 4.4rem);
-            line-height: 0.92;
-            text-transform: uppercase;
-        }
-
-        .hero-body {
-            padding: clamp(1.2rem, 3vw, 1.8rem);
-            display: grid;
-            gap: 1rem;
-        }
-
-        .hero-copy {
-            color: var(--muted);
-            max-width: 54ch;
-            font-size: 1.02rem;
-        }
-
-        .hero-stat {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 1rem;
-            align-items: end;
-            border: 4px solid var(--border);
-            background: var(--ink);
-            color: #fff7ef;
-            padding: 1rem 1.15rem;
-        }
-
-        .hero-value {
-            font-family: "Archivo Expanded", system-ui, sans-serif;
-            font-size: clamp(2.6rem, 9vw, 6rem);
-            line-height: 0.85;
-            color: var(--gold);
-        }
-
-        .hero-label {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            color: #d9cab8;
-            margin-bottom: 0.25rem;
-        }
-
-        .hero-title {
-            font-size: clamp(1rem, 3vw, 1.3rem);
-            font-weight: 700;
-        }
-
-        .status-stack {
-            display: grid;
-            gap: 1rem;
-        }
-
-        .status-card,
-        .filters,
-        .metric-grid,
-        .body-grid,
-        .export-row {
-            display: grid;
-            gap: 1rem;
-        }
-
-        .status-card {
-            padding: 1rem;
-        }
-
-        .status-card h2 {
-            font-family: "Archivo Expanded", system-ui, sans-serif;
-            font-size: 1.15rem;
-            text-transform: uppercase;
-            line-height: 1;
-            margin-bottom: 0.9rem;
-        }
-
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 0.75rem;
-            padding: 0.85rem 0;
-            border-top: 2px solid rgba(43, 27, 20, 0.15);
-        }
-
-        .status-row:first-of-type {
-            border-top: 0;
-            padding-top: 0;
-        }
-
-        .status-k {
-            color: var(--muted);
-            font-size: 0.88rem;
-            text-transform: uppercase;
-            font-weight: 700;
-        }
-
-        .status-v {
-            font-weight: 700;
-            text-align: right;
-        }
-
-        .filters {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            align-items: end;
-            padding: 1rem;
-        }
-
-        .filter-field {
-            display: grid;
-            gap: 0.42rem;
-        }
-
-        .filter-field label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            font-weight: 700;
-        }
-
-        select {
-            width: 100%;
-            min-height: 3rem;
-            border: 3px solid var(--border);
-            background: #fffbf4;
-            color: var(--ink);
-            font: 500 1rem "IBM Plex Sans", system-ui, sans-serif;
-            padding: 0.75rem 0.9rem;
-        }
-
-        select:focus {
-            outline: 3px solid var(--gold);
-            outline-offset: 2px;
-        }
-
-        .metric-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .metric-card {
-            border: 4px solid var(--border);
-            background: var(--paper-soft);
-            box-shadow: var(--shadow);
-            padding: 1rem;
-            cursor: pointer;
-        }
-
-        .metric-card.primary {
-            background: var(--ink);
-            color: #fff7ef;
-        }
-
-        .metric-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: inherit;
-            margin-bottom: 0.45rem;
-        }
-
-        .metric-value {
-            font-family: "Archivo Expanded", system-ui, sans-serif;
-            font-size: clamp(2rem, 6vw, 4rem);
-            line-height: 0.88;
-            color: var(--red);
-        }
-
-        .metric-card.primary .metric-value {
-            color: var(--gold);
-        }
-
-        .metric-meta {
-            margin-top: 0.65rem;
-            color: var(--muted);
-            font-size: 0.9rem;
-        }
-
-        .metric-card.primary .metric-meta {
-            color: #d9cab8;
-        }
-
-        .citation-drawer {
-            display: none;
-            border-top: 2px solid currentColor;
-            margin-top: 0.9rem;
-            padding-top: 0.9rem;
-            font-size: 0.82rem;
-            line-height: 1.5;
-            word-break: break-word;
-        }
-
-        .metric-card.show-citations .citation-drawer {
-            display: block;
-        }
-
-        .body-grid {
-            grid-template-columns: minmax(320px, 1.15fr) minmax(280px, 0.85fr);
-            align-items: start;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            border-bottom: 4px solid var(--border);
-            padding: 1rem;
-            background: var(--paper-deep);
-        }
-
-        .section-header h2 {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.55rem;
-            font-family: "Archivo Expanded", system-ui, sans-serif;
-            font-size: 1.08rem;
-            text-transform: uppercase;
-            line-height: 1;
-        }
-
-        .section-body {
-            padding: 1rem;
-        }
-
-        .finding-card {
-            display: grid;
-            gap: 0.85rem;
-        }
-
-        .finding-state {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            width: fit-content;
-            border: 3px solid var(--border);
-            padding: 0.55rem 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            background: rgba(178, 34, 34, 0.08);
-        }
-
-        .finding-title {
-            font-family: "Archivo Expanded", system-ui, sans-serif;
-            font-size: clamp(1.3rem, 4vw, 2.3rem);
-            line-height: 0.96;
-            text-transform: uppercase;
-        }
-
-        .comparison-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.75rem;
-        }
-
-        .comparison-card {
-            border: 3px solid var(--border);
-            background: #fffbf4;
-            padding: 0.9rem;
-        }
-
-        .comparison-k {
-            color: var(--muted);
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 0.35rem;
-        }
-
-        .themes-list,
-        .recent-list {
-            display: grid;
-            gap: 0.75rem;
-        }
-
-        .theme-item,
-        .recent-item {
-            border: 3px solid var(--border);
-            background: #fffbf4;
-        }
-
-        .theme-item {
-            cursor: pointer;
-        }
-
-        .theme-head {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 0.75rem;
-            padding: 0.9rem;
-            align-items: center;
-        }
-
-        .theme-name {
-            font-weight: 700;
-        }
-
-        .theme-count {
-            min-width: 3.2rem;
-            border: 2px solid var(--border);
-            background: var(--red);
-            color: #fff7ef;
-            padding: 0.3rem 0.55rem;
-            text-align: center;
-            font-family: "Archivo Expanded", system-ui, sans-serif;
-            font-size: 0.95rem;
-            line-height: 1;
-        }
-
-        .theme-quotes {
-            display: none;
-            border-top: 2px solid rgba(43, 27, 20, 0.14);
-            padding: 0.9rem;
-            background: rgba(231, 213, 184, 0.22);
-        }
-
-        .theme-item.expanded .theme-quotes {
-            display: block;
-        }
-
-        .quote {
-            border-left: 4px solid var(--red);
-            padding-left: 0.75rem;
-            margin-bottom: 0.7rem;
-            color: var(--muted);
-            font-style: italic;
-        }
-
-        .quote:last-child {
-            margin-bottom: 0;
-        }
-
-        .recent-item {
-            padding: 0.9rem;
-        }
-
-        .recent-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.45rem;
-            margin-bottom: 0.7rem;
-        }
-
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            border: 2px solid var(--border);
-            background: rgba(231, 213, 184, 0.28);
-            padding: 0.25rem 0.5rem;
-            font-size: 0.82rem;
-            font-weight: 700;
-        }
-
-        .recent-copy {
-            color: var(--muted);
-            font-size: 0.95rem;
-        }
-
-        .empty {
-            color: var(--muted);
-            font-weight: 700;
-        }
-
-        .export-row {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .icon {
-            width: 1.1rem;
-            height: 1.1rem;
-            flex: 0 0 auto;
-        }
-
-        .icon.large {
-            width: 1.35rem;
-            height: 1.35rem;
-        }
-
-        @media (max-width: 1100px) {
-            .masthead,
-            .body-grid,
-            .metric-grid,
-            .filters,
-            .export-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 720px) {
-            .topbar {
-                align-items: stretch;
-                flex-direction: column;
-            }
-
-            .topbar-actions,
-            .comparison-grid {
-                flex-direction: column;
-                grid-template-columns: 1fr;
-            }
-        }
+        /* Dashboard typography — matches original spec exactly */
+        .eyebrow       { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .hero-h1       { font-family: "Space Grotesk", system-ui, sans-serif; font-size: clamp(2rem, 6vw, 4.4rem); line-height: 0.92; text-transform: uppercase; letter-spacing: 0.02em; }
+        .hero-value    { font-family: "Space Grotesk", system-ui, sans-serif; font-size: clamp(2.6rem, 9vw, 6rem); line-height: 0.85; color: var(--gold); }
+        .hero-label    { font-size: 0.78rem; text-transform: uppercase; color: #d9cab8; margin-bottom: 0.25rem; font-weight: 700; letter-spacing: 0.1em; }
+        .hero-subtitle { font-size: clamp(1rem, 3vw, 1.3rem); font-weight: 700; line-height: 1.25; }
+        .hero-copy     { font-size: 1.02rem; color: var(--muted); line-height: 1.55; max-width: 54ch; }
+        .card-h2       { font-family: "Space Grotesk", system-ui, sans-serif; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; line-height: 1; margin-bottom: 0.9rem; }
+        .section-h2    { font-family: "Space Grotesk", system-ui, sans-serif; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; line-height: 1; }
+        .filter-label  { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+        .status-row    { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.8rem 0; border-top: 2px solid rgba(43,27,20,0.15); }
+        .status-row:first-of-type { border-top: 0; padding-top: 0; }
+        .status-k      { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+        .status-v      { font-weight: 600; text-align: right; font-size: 0.88rem; }
+        #resynthBtn:disabled, .export-btn:disabled { opacity: 0.65; cursor: wait; }
     </style>
 </head>
-<body>
-    <header class="topbar">
+<body class="font-sans text-ink">
+
+    <header class="border-b-4 border-frame px-4 sm:px-8 py-3 flex items-center justify-between gap-3 flex-wrap bg-paper-soft">
         <div>
-            <a class="brand" href="/dashboard">Strike Negotiator</a>
-            <p class="subtitle">What workers say. What companies file.</p>
+            <a href="/dashboard" class="font-heading text-[clamp(1rem,3vw,1.55rem)] uppercase leading-none">Strike Negotiator</a>
+            <p class="text-muted text-[0.92rem] font-semibold mt-1.5">What workers say. What companies file.</p>
         </div>
-        <div class="topbar-actions">
-            <a class="nav-link" href="/">
-                <span class="icon" data-icon="mic"></span>
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+            <a href="/" class="inline-flex items-center gap-2 border-3 border-frame bg-paper-soft px-4 py-2.5 font-bold text-[0.95rem] min-h-[3rem] hover:-translate-y-px transition-transform">
+                <ion-icon name="mic-outline" style="font-size:1.1rem"></ion-icon>
                 <span>Open intake</span>
             </a>
-            <button class="action-btn" id="resynthBtn" type="button">
-                <span class="icon" data-icon="refresh"></span>
+            <button id="resynthBtn" type="button"
+                    class="inline-flex items-center gap-2 border-3 border-frame bg-gold px-4 py-2.5 font-bold text-[0.95rem] uppercase min-h-[3rem] hover:-translate-y-px transition-transform">
+                <ion-icon name="refresh-outline" style="font-size:1.1rem"></ion-icon>
                 <span>Resynthesize</span>
             </button>
         </div>
     </header>
 
-    <main class="shell">
-        <section class="masthead">
-            <div class="panel hero">
-                <div class="hero-banner">
+    <main class="max-w-[1360px] mx-auto px-4 sm:px-6 py-4 grid gap-4">
+
+        <!-- Masthead: Hero + Status stack -->
+        <section class="grid grid-cols-1 min-[1100px]:grid-cols-[minmax(320px,1.15fr)_minmax(280px,0.85fr)] gap-4 items-stretch">
+            <!-- Hero panel -->
+            <div class="border-4 border-frame shadow-brutal bg-paper-soft overflow-hidden">
+                <div class="bg-crimson text-[#fff7ef] border-b-4 border-frame px-[clamp(1.2rem,3vw,2rem)] py-[clamp(1.2rem,3vw,2rem)]">
                     <div class="eyebrow">Demand pipeline · live</div>
-                    <h1 id="heroTitle">Waiting for voices</h1>
+                    <h1 id="heroTitle" class="hero-h1">Waiting for voices</h1>
                 </div>
-                <div class="hero-body">
-                    <p class="hero-copy" id="heroCopy">
+                <div class="p-[clamp(1.2rem,3vw,1.8rem)] grid gap-4">
+                    <p id="heroCopy" class="hero-copy">
                         The dashboard reads from the FastAPI backend, tracks the latest synthesis, and keeps the recent grievance feed live underneath it.
                     </p>
-                    <div class="hero-stat">
-                        <div class="hero-value" id="heroValue">0</div>
+                    <div class="border-4 border-frame bg-ink text-[#fff7ef] p-4 grid grid-cols-[auto_1fr] gap-4 items-end">
+                        <div id="heroValue" class="hero-value">0</div>
                         <div>
-                            <div class="hero-label" id="heroLabel">Current signal</div>
-                            <div class="hero-title" id="heroSubTitle">No synthesis loaded yet.</div>
+                            <div id="heroLabel" class="hero-label">Current signal</div>
+                            <div id="heroSubTitle" class="hero-subtitle">No synthesis loaded yet.</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="status-stack">
-                <div class="panel status-card">
-                    <h2>Live status</h2>
-                    <div class="status-row">
-                        <div class="status-k">Polling</div>
-                        <div class="status-v" id="pollStatus">Waiting to connect</div>
-                    </div>
-                    <div class="status-row">
-                        <div class="status-k">Last synthesis</div>
-                        <div class="status-v" id="lastUpdated">None</div>
-                    </div>
-                    <div class="status-row">
-                        <div class="status-k">Current filter</div>
-                        <div class="status-v" id="scopeSummary">All cities · all platforms</div>
-                    </div>
+            <!-- Status stack -->
+            <div class="flex flex-col gap-4">
+                <div class="border-4 border-frame shadow-brutal bg-paper-soft p-4">
+                    <h2 class="card-h2">Live status</h2>
+                    <div class="status-row"><span class="status-k">Polling</span><span class="status-v" id="pollStatus">Waiting to connect</span></div>
+                    <div class="status-row"><span class="status-k">Last synthesis</span><span class="status-v" id="lastUpdated">None</span></div>
+                    <div class="status-row"><span class="status-k">Current filter</span><span class="status-v" id="scopeSummary">All cities · all platforms</span></div>
                 </div>
-
-                <div class="panel status-card">
-                    <h2>Identity note</h2>
-                    <div class="status-row">
-                        <div class="status-k">Demo caveat</div>
-                        <div class="status-v">Blank phone intake uses browser demo IDs. Treat repeat-worker claims as unverified unless the phone field was used.</div>
-                    </div>
+                <div class="border-4 border-frame shadow-brutal bg-paper-soft p-4 flex-1">
+                    <h2 class="card-h2">Identity note</h2>
+                    <div class="status-row"><span class="status-k">Demo caveat</span><span class="status-v" style="font-size:0.82rem;font-weight:500;text-align:right;color:var(--muted)">Blank phone intake uses browser demo IDs. Treat repeat-worker claims as unverified unless the phone field was used.</span></div>
                 </div>
             </div>
         </section>
 
-        <section class="panel filters">
-            <div class="filter-field">
-                <label for="cityFilter">
-                    <span class="icon" data-icon="mapPin"></span>
-                    <span>City</span>
-                </label>
-                <select id="cityFilter"></select>
-            </div>
-            <div class="filter-field">
-                <label for="platformFilter">
-                    <span class="icon" data-icon="briefcase"></span>
-                    <span>Platform</span>
-                </label>
-                <select id="platformFilter"></select>
-            </div>
-            <div class="filter-field">
-                <label for="timeFilter">
-                    <span class="icon" data-icon="clock"></span>
-                    <span>Time window</span>
-                </label>
-                <select id="timeFilter">
-                    <option value="7">Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="90">Last 90 Days</option>
-                    <option value="">All Time</option>
-                </select>
-            </div>
-            <div class="filter-field">
-                <label for="recentLimit">
-                    <span class="icon" data-icon="activity"></span>
-                    <span>Recent notes</span>
-                </label>
-                <select id="recentLimit">
-                    <option value="6">Show 6</option>
-                    <option value="8" selected>Show 8</option>
-                    <option value="12">Show 12</option>
-                </select>
+        <!-- Filters -->
+        <section class="border-4 border-frame shadow-brutal bg-paper-soft">
+            <div class="grid grid-cols-2 min-[1100px]:grid-cols-4">
+                <div class="p-4 grid gap-1.5 border-r-4 border-frame">
+                    <label for="cityFilter" class="filter-label">
+                        <ion-icon name="location-outline" style="font-size:0.95rem"></ion-icon> City
+                    </label>
+                    <select id="cityFilter"></select>
+                </div>
+                <div class="p-4 grid gap-1.5 min-[1100px]:border-r-4 border-frame">
+                    <label for="platformFilter" class="filter-label">
+                        <ion-icon name="briefcase-outline" style="font-size:0.95rem"></ion-icon> Platform
+                    </label>
+                    <select id="platformFilter"></select>
+                </div>
+                <div class="p-4 grid gap-1.5 border-t-4 min-[1100px]:border-t-0 border-r-4 border-frame">
+                    <label for="timeFilter" class="filter-label">
+                        <ion-icon name="time-outline" style="font-size:0.95rem"></ion-icon> Time window
+                    </label>
+                    <select id="timeFilter">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="">All time</option>
+                    </select>
+                </div>
+                <div class="p-4 grid gap-1.5 border-t-4 min-[1100px]:border-t-0 border-frame">
+                    <label for="recentLimit" class="filter-label">
+                        <ion-icon name="pulse-outline" style="font-size:0.95rem"></ion-icon> Recent notes
+                    </label>
+                    <select id="recentLimit">
+                        <option value="6">Show 6</option>
+                        <option value="8" selected>Show 8</option>
+                        <option value="12">Show 12</option>
+                    </select>
+                </div>
             </div>
         </section>
 
-        <section class="metric-grid" id="metricGrid">
+        <!-- Metric strip -->
+        <section id="metricGrid" class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
             <article class="metric-card primary">
                 <div class="metric-label">Current signal</div>
                 <div class="metric-value">0</div>
@@ -669,88 +153,88 @@
             </article>
         </section>
 
-        <section class="body-grid">
-            <div class="panel">
-                <div class="section-header">
-                    <h2>
-                        <span class="icon" data-icon="alert"></span>
-                        <span>Company contradiction</span>
-                    </h2>
+        <!-- Body: Contradiction + Recent -->
+        <section class="grid grid-cols-1 min-[1100px]:grid-cols-[minmax(320px,1.15fr)_minmax(280px,0.85fr)] gap-4 items-stretch">
+            <div class="border-4 border-frame shadow-brutal bg-paper-soft overflow-hidden flex flex-col">
+                <div class="flex items-center gap-2 border-b-4 border-frame px-4 py-3 bg-paper-deep">
+                    <ion-icon name="warning-outline" style="font-size:1.1rem"></ion-icon>
+                    <h2 class="section-h2">Company contradiction</h2>
                 </div>
-                <div class="section-body" id="findingPanel">
-                    <div class="empty">No filing contradiction yet.</div>
+                <div class="p-4 flex-1" id="findingPanel">
+                    <div class="text-muted font-bold text-[0.95rem]">No filing contradiction yet.</div>
                 </div>
             </div>
 
-            <div class="panel">
-                <div class="section-header">
-                    <h2>
-                        <span class="icon" data-icon="waves"></span>
-                        <span>Recent grievances</span>
-                    </h2>
+            <div class="border-4 border-frame shadow-brutal bg-paper-soft overflow-hidden flex flex-col">
+                <div class="flex items-center gap-2 border-b-4 border-frame px-4 py-3 bg-paper-deep">
+                    <ion-icon name="pulse-outline" style="font-size:1.1rem"></ion-icon>
+                    <h2 class="section-h2">Recent grievances</h2>
                 </div>
-                <div class="section-body">
-                    <div class="recent-list" id="recentList">
-                        <div class="empty">No recent grievances loaded.</div>
-                    </div>
+                <div class="p-4 grid gap-2 flex-1 content-start" id="recentList">
+                    <div class="text-muted font-bold text-[0.95rem]">No recent grievances loaded.</div>
                 </div>
             </div>
         </section>
 
-        <section class="panel">
-            <div class="section-header">
-                <h2>
-                    <span class="icon" data-icon="quote"></span>
-                    <span>What people are saying</span>
-                </h2>
+        <!-- Themes -->
+        <section class="border-4 border-frame shadow-brutal bg-paper-soft overflow-hidden">
+            <div class="flex items-center justify-between gap-2 border-b-4 border-frame px-4 py-3 bg-paper-deep">
+                <div class="flex items-center gap-2">
+                    <ion-icon name="chatbubbles-outline" style="font-size:1.1rem"></ion-icon>
+                    <h2 class="section-h2">What people are saying</h2>
+                </div>
                 <span id="themeMeta" class="status-k">0 themes</span>
             </div>
-            <div class="section-body">
-                <div class="themes-list" id="themeList">
-                    <div class="empty">No themes yet.</div>
-                </div>
+            <div class="p-4 grid gap-2" id="themeList">
+                <div class="text-muted font-bold text-[0.95rem]">No themes yet.</div>
             </div>
         </section>
 
-        <section class="export-row" id="exportRow">
-            <button class="export-btn" data-kind="demand_list" type="button">
-                <span class="icon" data-icon="fileText"></span>
+        <!-- Exports -->
+        <section class="grid grid-cols-1 min-[1100px]:grid-cols-3 gap-4" id="exportRow">
+            <button class="export-btn inline-flex items-center justify-center gap-2 border-4 border-frame bg-ink text-[#fff7ef] font-bold uppercase text-[0.95rem] px-4 min-h-[3rem] hover:-translate-y-px transition-transform w-full"
+                    data-kind="demand_list" type="button">
+                <ion-icon name="document-text-outline" style="font-size:1.1rem"></ion-icon>
                 <span>Demand List</span>
             </button>
-            <button class="export-btn" data-kind="press_release" type="button">
-                <span class="icon" data-icon="megaphone"></span>
+            <button class="export-btn inline-flex items-center justify-center gap-2 border-4 border-frame bg-ink text-[#fff7ef] font-bold uppercase text-[0.95rem] px-4 min-h-[3rem] hover:-translate-y-px transition-transform w-full"
+                    data-kind="press_release" type="button">
+                <ion-icon name="megaphone-outline" style="font-size:1.1rem"></ion-icon>
                 <span>Press Release</span>
             </button>
-            <button class="export-btn" data-kind="brief" type="button">
-                <span class="icon" data-icon="brief"></span>
+            <button class="export-btn inline-flex items-center justify-center gap-2 border-4 border-frame bg-ink text-[#fff7ef] font-bold uppercase text-[0.95rem] px-4 min-h-[3rem] hover:-translate-y-px transition-transform w-full"
+                    data-kind="brief" type="button">
+                <ion-icon name="documents-outline" style="font-size:1.1rem"></ion-icon>
                 <span>Brief</span>
             </button>
         </section>
+
     </main>
 
-    <script src="/static/icons.js"></script>
+    <script src="/static/utils.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <script>
         let currentState = null;
         let isSynthesizing = false;
         let pollHandle = null;
 
-        const resynthBtn = document.getElementById("resynthBtn");
-        const cityFilter = document.getElementById("cityFilter");
+        const resynthBtn     = document.getElementById("resynthBtn");
+        const cityFilter     = document.getElementById("cityFilter");
         const platformFilter = document.getElementById("platformFilter");
-        const timeFilter = document.getElementById("timeFilter");
-        const recentLimit = document.getElementById("recentLimit");
+        const timeFilter     = document.getElementById("timeFilter");
+        const recentLimit    = document.getElementById("recentLimit");
 
         document.addEventListener("DOMContentLoaded", init);
         resynthBtn.addEventListener("click", runSynthesis);
-        [cityFilter, platformFilter, timeFilter, recentLimit].forEach((element) => {
-            element.addEventListener("change", handleFilterChange);
-        });
-        document.querySelectorAll(".export-btn").forEach((btn) => {
-            btn.addEventListener("click", () => exportDocument(btn.dataset.kind, btn));
-        });
+        [cityFilter, platformFilter, timeFilter, recentLimit].forEach((el) =>
+            el.addEventListener("change", handleFilterChange)
+        );
+        document.querySelectorAll(".export-btn").forEach((btn) =>
+            btn.addEventListener("click", () => exportDocument(btn.dataset.kind, btn))
+        );
 
         async function init() {
-            window.hydrateStrikeIcons();
             hydrateFiltersFromUrl();
             await loadState();
             pollHandle = setInterval(pollState, 5000);
@@ -758,34 +242,29 @@
 
         function currentScope() {
             const scope = {};
-            const cityValue = cityFilter.value || cityFilter.dataset.pendingValue || "";
-            const platformValue = platformFilter.value || platformFilter.dataset.pendingValue || "";
-            if (cityValue) scope.city = cityValue;
-            if (platformValue) scope.platform = platformValue;
-            if (timeFilter.value) {
-                scope.since = Math.floor(Date.now() / 1000) - (parseInt(timeFilter.value, 10) * 86400);
-            }
+            const city = cityFilter.value || cityFilter.dataset.pendingValue || "";
+            const platform = platformFilter.value || platformFilter.dataset.pendingValue || "";
+            if (city) scope.city = city;
+            if (platform) scope.platform = platform;
+            if (timeFilter.value) scope.since = Math.floor(Date.now() / 1000) - parseInt(timeFilter.value, 10) * 86400;
             scope.recent_limit = parseInt(recentLimit.value, 10);
             return scope;
         }
 
         function scopeQueryString() {
             const params = new URLSearchParams();
-            const scope = currentScope();
-            if (scope.city) params.set("city", scope.city);
-            if (scope.platform) params.set("platform", scope.platform);
-            if (scope.since) params.set("since", String(scope.since));
-            params.set("recent_limit", String(scope.recent_limit));
+            const s = currentScope();
+            if (s.city) params.set("city", s.city);
+            if (s.platform) params.set("platform", s.platform);
+            if (s.since) params.set("since", String(s.since));
+            params.set("recent_limit", String(s.recent_limit));
             return params.toString();
         }
 
         async function loadState() {
-            setPollStatus("Loading dashboard state");
+            setPollStatus("Loading…");
             const response = await fetch(`/dashboard/state?${scopeQueryString()}`, { cache: "no-store" });
-            if (!response.ok) {
-                setPollStatus("Dashboard state failed");
-                throw new Error("dashboard state");
-            }
+            if (!response.ok) { setPollStatus("Load failed"); throw new Error("dashboard state"); }
             const state = await response.json();
             currentState = state;
             populateFilters(state.metadata);
@@ -796,66 +275,44 @@
             if (isSynthesizing) return;
             try {
                 await loadState();
-                setPollStatus("Polling latest synthesis every 5 seconds");
-            } catch (error) {
-                console.warn("Polling failed:", error);
+                setPollStatus("Polling every 5s");
+            } catch (err) {
+                console.warn("Polling failed:", err);
             }
         }
 
         async function handleFilterChange() {
-            try {
-                syncScopeToUrl();
-                await loadState();
-            } catch (error) {
-                console.warn("Filter load failed:", error);
-            }
+            try { syncScopeToUrl(); await loadState(); }
+            catch (err) { console.warn("Filter load failed:", err); }
         }
 
         function hydrateFiltersFromUrl() {
             const params = new URLSearchParams(window.location.search);
             cityFilter.dataset.pendingValue = params.get("city") || "";
             platformFilter.dataset.pendingValue = params.get("platform") || "";
-
-            const days = params.get("days");
-            if (days) {
-                timeFilter.value = days;
-            }
-
-            const recent = params.get("recent_limit");
-            if (recent) {
-                recentLimit.value = recent;
-            }
+            if (params.get("days")) timeFilter.value = params.get("days");
+            if (params.get("recent_limit")) recentLimit.value = params.get("recent_limit");
         }
 
         function syncScopeToUrl() {
             const params = new URLSearchParams();
-            if (cityFilter.value) {
-                params.set("city", cityFilter.value);
-            }
-            if (platformFilter.value) {
-                params.set("platform", platformFilter.value);
-            }
-            if (timeFilter.value) {
-                params.set("days", timeFilter.value);
-            }
-            if (recentLimit.value) {
-                params.set("recent_limit", recentLimit.value);
-            }
-
-            const next = params.toString() ? `/dashboard?${params.toString()}` : "/dashboard";
-            window.history.replaceState({}, "", next);
+            if (cityFilter.value) params.set("city", cityFilter.value);
+            if (platformFilter.value) params.set("platform", platformFilter.value);
+            if (timeFilter.value) params.set("days", timeFilter.value);
+            if (recentLimit.value) params.set("recent_limit", recentLimit.value);
+            window.history.replaceState({}, "", params.toString() ? `/dashboard?${params}` : "/dashboard");
         }
 
         function populateFilters(metadata) {
             if (!metadata) return;
-            const cityValue = cityFilter.value || cityFilter.dataset.pendingValue || "";
-            const platformValue = platformFilter.value || platformFilter.dataset.pendingValue || "";
-            cityFilter.innerHTML = '<option value="">All Cities</option>' +
-                metadata.cities.map((city) => `<option value="${escapeHtml(city.value)}">${escapeHtml(city.label_en)}</option>`).join("");
-            platformFilter.innerHTML = '<option value="">All Platforms</option>' +
-                metadata.platforms.map((platform) => `<option value="${escapeHtml(platform.value)}">${escapeHtml(platform.label_en)}</option>`).join("");
-            cityFilter.value = cityValue;
-            platformFilter.value = platformValue;
+            const city = cityFilter.value || cityFilter.dataset.pendingValue || "";
+            const platform = platformFilter.value || platformFilter.dataset.pendingValue || "";
+            cityFilter.innerHTML = '<option value="">All cities</option>' +
+                metadata.cities.map((c) => `<option value="${escapeHtml(c.value)}">${escapeHtml(c.label_en)}</option>`).join("");
+            platformFilter.innerHTML = '<option value="">All platforms</option>' +
+                metadata.platforms.map((p) => `<option value="${escapeHtml(p.value)}">${escapeHtml(p.label_en)}</option>`).join("");
+            cityFilter.value = city;
+            platformFilter.value = platform;
             delete cityFilter.dataset.pendingValue;
             delete platformFilter.dataset.pendingValue;
         }
@@ -863,7 +320,7 @@
         async function runSynthesis() {
             isSynthesizing = true;
             resynthBtn.disabled = true;
-            resynthBtn.lastElementChild.textContent = "Synthesizing";
+            resynthBtn.querySelector("span").textContent = "Synthesizing…";
             setPollStatus("Running synthesis");
             try {
                 const { recent_limit, ...scope } = currentScope();
@@ -872,18 +329,16 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(scope)
                 });
-                if (!response.ok) {
-                    throw new Error("synthesis");
-                }
+                if (!response.ok) throw new Error("synthesis");
                 await loadState();
                 setPollStatus("Synthesis complete");
-            } catch (error) {
-                console.error("Synthesis failed:", error);
+            } catch (err) {
+                console.error("Synthesis failed:", err);
                 setPollStatus("Synthesis failed");
             } finally {
                 isSynthesizing = false;
                 resynthBtn.disabled = false;
-                resynthBtn.lastElementChild.textContent = "Resynthesize";
+                resynthBtn.querySelector("span").textContent = "Resynthesize";
             }
         }
 
@@ -900,119 +355,105 @@
 
         function renderHero(state) {
             const themes = state.output.themes || [];
-            const topTheme = themes[0];
-            const heroValue = document.getElementById("heroValue");
-            const heroLabel = document.getElementById("heroLabel");
-            const heroTitle = document.getElementById("heroTitle");
+            const top = themes[0];
+            const heroValue    = document.getElementById("heroValue");
+            const heroLabel    = document.getElementById("heroLabel");
+            const heroTitle    = document.getElementById("heroTitle");
             const heroSubTitle = document.getElementById("heroSubTitle");
-            const heroCopy = document.getElementById("heroCopy");
+            const heroCopy     = document.getElementById("heroCopy");
 
-            if (topTheme) {
-                heroTitle.textContent = "Most concentrated demand";
-                heroValue.textContent = String(topTheme.count);
-                heroLabel.textContent = "Workers behind it";
-                heroSubTitle.textContent = topTheme.label;
-                heroCopy.textContent = "The dashboard is rendering the latest synthesis payload directly from FastAPI, with filters applied before clustering, metrics, contradictions, and exports.";
+            if (top) {
+                heroTitle.textContent    = "Most concentrated demand";
+                heroValue.textContent    = String(top.count);
+                heroLabel.textContent    = "Workers behind it";
+                heroSubTitle.textContent = top.label;
+                heroCopy.textContent     = "Rendering latest synthesis payload directly from FastAPI, with filters applied before clustering.";
                 return;
             }
-
-            heroTitle.textContent = state.grievance_count ? "Voices captured" : "Waiting for voices";
-            heroValue.textContent = String(state.grievance_count || 0);
-            heroLabel.textContent = "Current signal";
+            heroTitle.textContent    = state.grievance_count ? "Voices captured" : "Waiting for voices";
+            heroValue.textContent    = String(state.grievance_count || 0);
+            heroLabel.textContent    = "Current signal";
             heroSubTitle.textContent = state.grievance_count
-                ? "Recent grievances are flowing in, but this filter has not been synthesized yet."
+                ? "Grievances are flowing in. Run synthesis to see themes."
                 : "No grievances match the current filter.";
-            heroCopy.textContent = "The intake form writes to the backend immediately. Once synthesis runs, this surface promotes the strongest theme, metrics, and contradiction.";
+            heroCopy.textContent = "The intake form writes to the backend immediately. Once synthesis runs, this surface promotes the strongest theme and contradiction.";
         }
 
         function renderMetrics(metrics, grievanceCount) {
             const container = document.getElementById("metricGrid");
             if (!metrics.length) {
-                container.innerHTML = `
-                    <article class="metric-card primary">
-                        <div class="metric-label">Current signal</div>
-                        <div class="metric-value">${escapeHtml(String(grievanceCount))}</div>
-                        <div class="metric-meta">Grievances currently matching this filter.</div>
-                    </article>
-                `;
+                container.innerHTML = `<article class="metric-card primary">
+                    <div class="metric-label">Current signal</div>
+                    <div class="metric-value">${escapeHtml(String(grievanceCount))}</div>
+                    <div class="metric-meta">Grievances matching this filter.</div>
+                </article>`;
                 return;
             }
-
-            const cards = metrics.slice(0, 3).map((metric, index) => `
-                <article class="metric-card ${index === 0 ? "primary" : ""}" onclick="toggleCitations(this)">
-                    <div class="metric-label">${escapeHtml(metric.name)}</div>
-                    <div class="metric-value">${escapeHtml(String(metric.value))}</div>
-                    <div class="metric-meta">${escapeHtml(metric.method || "")} - n=${escapeHtml(String(metric.n || 0))}</div>
+            container.innerHTML = metrics.slice(0, 3).map((m, i) => `
+                <article class="metric-card ${i === 0 ? "primary" : ""}" onclick="toggleCitations(this)">
+                    <div class="metric-label">${escapeHtml(m.name)}</div>
+                    <div class="metric-value">${escapeHtml(String(m.value))}</div>
+                    <div class="metric-meta">${escapeHtml(m.method || "")} · n=${escapeHtml(String(m.n || 0))}</div>
                     <div class="citation-drawer">
-                        <strong>Citations (${metric.grievance_ids?.length || 0})</strong>
-                        <div>${formatIds(metric.grievance_ids || [])}</div>
+                        <strong>Citations (${m.grievance_ids?.length || 0})</strong>
+                        <div>${formatIds(m.grievance_ids || [])}</div>
                     </div>
-                </article>
-            `).join("");
-            container.innerHTML = cards;
+                </article>`).join("");
         }
 
         function renderFinding(findings) {
             const container = document.getElementById("findingPanel");
-            const contradiction = findings.find((finding) => finding.verdict === "contradiction") || findings[0];
-            if (!contradiction) {
-                container.innerHTML = '<div class="empty">No filing contradiction yet.</div>';
+            const hit = findings.find((f) => f.verdict === "contradiction") || findings[0];
+            if (!hit) {
+                container.innerHTML = '<div class="text-muted font-bold text-sm">No filing contradiction yet.</div>';
                 return;
             }
-
-            const title = contradiction.verdict === "contradiction" ? "Contradiction found" : `${contradiction.verdict} detected`;
-            container.innerHTML = `
-                <div class="finding-card">
-                    <div class="finding-state">
-                        <span class="icon" data-icon="alert"></span>
-                        <span>${escapeHtml(title)}</span>
+            const title = hit.verdict === "contradiction" ? "Contradiction found" : `${hit.verdict} detected`;
+            container.innerHTML = `<div class="finding-card">
+                <div class="finding-state">
+                    <ion-icon name="warning-outline" style="font-size:0.85rem"></ion-icon>
+                    <span>${escapeHtml(title)}</span>
+                </div>
+                <div class="finding-title">${escapeHtml(hit.summary || hit.worker_metric || "No summary available.")}</div>
+                <div class="comparison-grid">
+                    <div class="comparison-card">
+                        <div class="comparison-k">Worker metric</div>
+                        <div class="comparison-v">${escapeHtml(hit.worker_metric || "No metric available.")}</div>
                     </div>
-                    <div class="finding-title">${escapeHtml(contradiction.summary || contradiction.worker_metric || "No summary available.")}</div>
-                    <div class="comparison-grid">
-                        <div class="comparison-card">
-                            <div class="comparison-k">Worker metric</div>
-                            <div>${escapeHtml(contradiction.worker_metric || "No quantified metric available.")}</div>
-                        </div>
-                        <div class="comparison-card">
-                            <div class="comparison-k">${escapeHtml(contradiction.filing_chunk_id || "Filing excerpt")}</div>
-                            <div>${escapeHtml(contradiction.filing_excerpt || "No filing excerpt available.")}</div>
-                        </div>
+                    <div class="comparison-card">
+                        <div class="comparison-k">${escapeHtml(hit.filing_chunk_id || "Filing excerpt")}</div>
+                        <div class="comparison-v">${escapeHtml(hit.filing_excerpt || "No excerpt available.")}</div>
                     </div>
                 </div>
-            `;
-            window.hydrateStrikeIcons(container);
+            </div>`;
         }
 
         function renderRecent(grievances) {
             const container = document.getElementById("recentList");
             if (!grievances.length) {
-                container.innerHTML = '<div class="empty">No recent grievances loaded.</div>';
+                container.innerHTML = '<div class="text-muted font-bold text-sm">No recent grievances loaded.</div>';
                 return;
             }
-
-            container.innerHTML = grievances.map((grievance) => `
+            container.innerHTML = grievances.map((g) => `
                 <article class="recent-item">
                     <div class="recent-meta">
-                        <span class="pill"><span class="icon" data-icon="activity"></span>${escapeHtml(grievance.source)}</span>
-                        <span class="pill"><span class="icon" data-icon="briefcase"></span>${escapeHtml(grievance.platform || "unknown platform")}</span>
-                        <span class="pill"><span class="icon" data-icon="mapPin"></span>${escapeHtml(grievance.city_bucket || "unbucketed city")}</span>
-                        <span class="pill"><span class="icon" data-icon="globe"></span>${escapeHtml(grievance.language || "unknown")}</span>
-                        <span class="pill"><span class="icon" data-icon="clock"></span>${escapeHtml(relativeTime(grievance.created_at))}</span>
+                        <span class="pill"><ion-icon name="pulse-outline" style="font-size:0.75rem"></ion-icon>${escapeHtml(g.source)}</span>
+                        <span class="pill"><ion-icon name="briefcase-outline" style="font-size:0.75rem"></ion-icon>${escapeHtml(g.platform || "unknown")}</span>
+                        <span class="pill"><ion-icon name="location-outline" style="font-size:0.75rem"></ion-icon>${escapeHtml(g.city_bucket || "—")}</span>
+                        <span class="pill"><ion-icon name="globe-outline" style="font-size:0.75rem"></ion-icon>${escapeHtml(g.language || "?")}</span>
+                        <span class="pill"><ion-icon name="time-outline" style="font-size:0.75rem"></ion-icon>${escapeHtml(relativeTime(g.created_at))}</span>
                     </div>
-                    <div class="recent-copy">${escapeHtml(grievance.transcript_preview || "")}</div>
-                </article>
-            `).join("");
-            window.hydrateStrikeIcons(container);
+                    <div class="recent-copy">${escapeHtml(g.transcript_preview || "")}</div>
+                </article>`).join("");
         }
 
         function renderThemes(themes) {
             const container = document.getElementById("themeList");
             document.getElementById("themeMeta").textContent = `${themes.length} theme${themes.length === 1 ? "" : "s"}`;
             if (!themes.length) {
-                container.innerHTML = '<div class="empty">No themes yet.</div>';
+                container.innerHTML = '<div class="text-muted font-bold text-sm">No themes yet.</div>';
                 return;
             }
-
             container.innerHTML = themes.map((theme) => `
                 <article class="theme-item" onclick="toggleTheme(this)">
                     <div class="theme-head">
@@ -1020,25 +461,23 @@
                         <div class="theme-count">${escapeHtml(String(theme.count))}</div>
                     </div>
                     <div class="theme-quotes">
-                        ${(theme.quotes || []).map((quote) => `<div class="quote">"${escapeHtml(quote)}"</div>`).join("")}
+                        ${(theme.quotes || []).map((q) => `<div class="quote">"${escapeHtml(q)}"</div>`).join("")}
                     </div>
-                </article>
-            `).join("");
+                </article>`).join("");
         }
 
-        function setLastUpdated(timestamp) {
-            document.getElementById("lastUpdated").textContent = timestamp
-                ? new Date(timestamp * 1000).toLocaleTimeString()
+        function setLastUpdated(ts) {
+            document.getElementById("lastUpdated").textContent = ts
+                ? new Date(ts * 1000).toLocaleTimeString()
                 : "None";
         }
 
         function setScopeSummary(scope) {
-            const summary = [
+            document.getElementById("scopeSummary").textContent = [
                 scope.city || "All cities",
                 scope.platform || "all platforms",
-                scope.since ? "bounded window" : "all time"
-            ];
-            document.getElementById("scopeSummary").textContent = summary.join(" - ");
+                scope.since ? "bounded" : "all time"
+            ].join(" · ");
         }
 
         function setPollStatus(text) {
@@ -1046,84 +485,50 @@
         }
 
         function setExportAvailability(enabled) {
-            document.querySelectorAll(".export-btn").forEach((btn) => {
-                btn.disabled = !enabled;
-            });
+            document.querySelectorAll(".export-btn").forEach((btn) => { btn.disabled = !enabled; });
         }
 
-        function toggleTheme(element) {
-            element.classList.toggle("expanded");
-        }
+        function toggleTheme(el) { el.classList.toggle("expanded"); }
 
-        function toggleCitations(element) {
-            document.querySelectorAll(".metric-card").forEach((card) => {
-                if (card !== element) {
-                    card.classList.remove("show-citations");
-                }
-            });
-            element.classList.toggle("show-citations");
+        function toggleCitations(el) {
+            document.querySelectorAll(".metric-card").forEach((c) => { if (c !== el) c.classList.remove("show-citations"); });
+            el.classList.toggle("show-citations");
         }
 
         async function exportDocument(kind, button) {
-            if (!currentState?.synthesis?.id) {
-                setPollStatus("No synthesis available for export");
-                return;
-            }
-
-            const originalLabel = button.lastElementChild.textContent;
+            if (!currentState?.synthesis?.id) { setPollStatus("No synthesis for export"); return; }
+            const orig = button.querySelector("span").textContent;
             button.disabled = true;
-            button.lastElementChild.textContent = "Generating";
+            button.querySelector("span").textContent = "Generating…";
             try {
                 const response = await fetch("/exports", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ synthesis_id: currentState.synthesis.id, kind })
                 });
-                if (!response.ok) {
-                    throw new Error("export");
-                }
+                if (!response.ok) throw new Error("export");
                 const payload = await response.json();
                 downloadMarkdown(payload.body_md, `${kind}.md`);
                 setPollStatus("Export ready");
-            } catch (error) {
-                console.error("Export failed:", error);
+            } catch (err) {
+                console.error("Export failed:", err);
                 setPollStatus("Export failed");
             } finally {
                 button.disabled = false;
-                button.lastElementChild.textContent = originalLabel;
+                button.querySelector("span").textContent = orig;
             }
         }
 
         function downloadMarkdown(content, filename) {
-            const blob = new Blob([content], { type: "text/markdown" });
-            const url = URL.createObjectURL(blob);
-            const anchor = document.createElement("a");
-            anchor.href = url;
-            anchor.download = filename;
-            anchor.click();
+            const url = URL.createObjectURL(new Blob([content], { type: "text/markdown" }));
+            const a = Object.assign(document.createElement("a"), { href: url, download: filename });
+            a.click();
             URL.revokeObjectURL(url);
         }
 
         function formatIds(ids) {
             const shown = ids.slice(0, 20).map(escapeHtml);
             return shown.join(", ") + (ids.length > 20 ? `, and ${ids.length - 20} more` : "");
-        }
-
-        function relativeTime(unixSeconds) {
-            const delta = Math.max(0, Math.floor(Date.now() / 1000) - unixSeconds);
-            if (delta < 60) return `${delta}s ago`;
-            if (delta < 3600) return `${Math.floor(delta / 60)}m ago`;
-            if (delta < 86400) return `${Math.floor(delta / 3600)}h ago`;
-            return `${Math.floor(delta / 86400)}d ago`;
-        }
-
-        function escapeHtml(value) {
-            return String(value)
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll('"', "&quot;")
-                .replaceAll("'", "&#039;");
         }
     </script>
 </body>
