@@ -1,0 +1,2 @@
+"""Strike Negotiator backend package."""
+
