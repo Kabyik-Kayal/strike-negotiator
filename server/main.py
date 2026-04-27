@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
+import json
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from server.constants import CITY_BUCKETS, PLATFORMS
@@ -38,6 +39,28 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 
+def _scope_payload(city: str | None, platform: str | None, since: int | None) -> dict[str, str | int]:
+    payload: dict[str, str | int] = {}
+    if city:
+        payload["city"] = city
+    if platform:
+        payload["platform"] = platform
+    if since:
+        payload["since"] = since
+    return payload
+
+
+def _compact_scope(scope: dict[str, str | int]) -> str:
+    return json.dumps(scope, ensure_ascii=False, separators=(",", ":"))
+
+
+def _preview(text: str, limit: int = 180) -> str:
+    compact = " ".join(text.split()).strip()
+    if len(compact) <= limit:
+        return compact
+    return f"{compact[: limit - 1].rstrip()}…"
+
+
 @app.get("/", include_in_schema=False)
 def worker_form() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "form.html")
@@ -56,6 +79,66 @@ def health() -> dict[str, str]:
 @app.get("/metadata")
 def metadata() -> dict[str, list[dict[str, str]]]:
     return {"cities": CITY_BUCKETS, "platforms": PLATFORMS}
+
+
+@app.get("/dashboard/state")
+def dashboard_state(
+    db: Annotated[Session, Depends(get_session)],
+    city: str | None = None,
+    platform: str | None = None,
+    since: int | None = None,
+    recent_limit: int = 8,
+) -> dict[str, object]:
+    scope = _scope_payload(city, platform, since)
+    grievance_stmt = select(Grievance)
+    if city:
+        grievance_stmt = grievance_stmt.where(Grievance.city_bucket == city)
+    if platform:
+        grievance_stmt = grievance_stmt.where(Grievance.platform == platform)
+    if since:
+        grievance_stmt = grievance_stmt.where(Grievance.created_at >= since)
+
+    grievance_count = db.scalar(select(func.count()).select_from(grievance_stmt.subquery())) or 0
+    recent_grievances = list(
+        db.scalars(grievance_stmt.order_by(desc(Grievance.created_at)).limit(min(recent_limit, 24)))
+    )
+
+    synthesis_stmt = select(Synthesis)
+    if scope:
+        synthesis_stmt = synthesis_stmt.where(Synthesis.scope_filter == _compact_scope(scope))
+    synthesis = db.scalars(synthesis_stmt.order_by(desc(Synthesis.created_at))).first()
+
+    output = {"themes": [], "metrics": [], "findings": [], "exports": {}}
+    synthesis_payload: dict[str, object] | None = None
+    if synthesis is not None:
+        output = json.loads(synthesis.output_json)
+        synthesis_payload = {
+            "id": synthesis.id,
+            "created_at": synthesis.created_at,
+            "scope_filter": json.loads(synthesis.scope_filter or "{}"),
+            "grievance_ids": json.loads(synthesis.grievance_ids),
+            "exports": output.get("exports", {}),
+        }
+
+    return {
+        "metadata": {"cities": CITY_BUCKETS, "platforms": PLATFORMS},
+        "scope": scope,
+        "grievance_count": grievance_count,
+        "recent_grievances": [
+            {
+                "id": grievance.id,
+                "created_at": grievance.created_at,
+                "source": grievance.source,
+                "language": grievance.language,
+                "city_bucket": grievance.city_bucket,
+                "platform": grievance.platform,
+                "transcript_preview": _preview(grievance.transcript),
+            }
+            for grievance in recent_grievances
+        ],
+        "synthesis": synthesis_payload,
+        "output": output,
+    }
 
 
 @app.post("/ingest/text", response_model=IngestResponse, status_code=201)

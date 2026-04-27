@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Record a Grievance</title>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+    <title>Strike Negotiator Intake</title>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --paper: #f4efe6;
-            --paper-deep: #eadfce;
-            --ink: #17130f;
-            --muted: #6f655a;
-            --line: #282018;
+            --paper: #f4ead7;
+            --paper-soft: #fff7ec;
+            --paper-deep: #e7d5b8;
+            --ink: #1f140e;
+            --muted: #6f5849;
+            --border: #2b1b14;
             --red: #b22222;
-            --red-dark: #8f1919;
-            --gold: #f2c14e;
-            --green: #236347;
+            --red-dark: #8d1818;
+            --gold: #f0b74a;
+            --green: #245f47;
         }
 
         * {
@@ -27,138 +28,250 @@
         body {
             min-height: 100vh;
             background:
-                linear-gradient(90deg, rgba(23, 19, 15, 0.04) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(23, 19, 15, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(31, 20, 14, 0.04) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(31, 20, 14, 0.035) 1px, transparent 1px),
+                radial-gradient(circle at top left, rgba(240, 183, 74, 0.14), transparent 28%),
                 var(--paper);
-            background-size: 28px 28px;
+            background-size: 30px 30px, 30px 30px, auto, auto;
             color: var(--ink);
             font-family: "IBM Plex Sans", system-ui, sans-serif;
         }
 
-        header {
-            border-bottom: 3px solid var(--line);
-            background: var(--paper);
-            padding: 1rem clamp(1rem, 4vw, 3rem);
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .topbar {
+            border-bottom: 4px solid var(--border);
+            padding: 1rem clamp(1rem, 3vw, 2.25rem);
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 1rem;
         }
 
-        .masthead {
-            font-family: "Inter Tight", system-ui, sans-serif;
-            font-weight: 900;
+        .brand {
+            display: block;
+            font-family: "Archivo Expanded", system-ui, sans-serif;
+            font-size: clamp(1rem, 3vw, 1.55rem);
+            line-height: 1;
             letter-spacing: 0;
             text-transform: uppercase;
-            font-size: clamp(1.2rem, 3vw, 2rem);
+        }
+
+        .tagline {
+            margin-top: 0.4rem;
+            color: var(--muted);
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .nav-link,
+        .lang-btn,
+        .record-btn,
+        .secondary-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            min-height: 3rem;
+            border: 3px solid var(--border);
+            font: 700 0.95rem "IBM Plex Sans", system-ui, sans-serif;
+            padding: 0.75rem 1rem;
+            transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+        }
+
+        .nav-link {
+            background: var(--paper-soft);
+        }
+
+        .nav-link:hover,
+        .lang-btn:hover,
+        .record-btn:hover:not(:disabled),
+        .secondary-btn:hover {
+            transform: translateY(-1px);
         }
 
         .lang-toggle {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            border: 2px solid var(--line);
-            background: var(--paper-deep);
+            display: flex;
+            border: 3px solid var(--border);
         }
 
         .lang-btn {
-            min-width: 6rem;
             border: 0;
-            border-right: 2px solid var(--line);
-            background: transparent;
-            color: var(--ink);
-            cursor: pointer;
-            font: 800 0.9rem "Inter Tight", system-ui, sans-serif;
-            padding: 0.65rem 0.9rem;
+            min-width: 6.3rem;
+            background: var(--paper-deep);
+            padding-inline: 1rem;
         }
 
-        .lang-btn:last-child {
-            border-right: 0;
+        .lang-btn + .lang-btn {
+            border-left: 3px solid var(--border);
         }
 
         .lang-btn.active {
             background: var(--red);
-            color: #fffaf2;
+            color: #fff7ef;
         }
 
-        main {
-            min-height: calc(100vh - 74px);
+        .shell {
+            width: min(1240px, 100%);
+            margin: 0 auto;
+            padding: clamp(1rem, 3vw, 2rem);
             display: grid;
-            place-items: center;
-            padding: clamp(1.25rem, 4vw, 4rem);
+            grid-template-columns: minmax(300px, 1.1fr) minmax(320px, 0.95fr);
+            gap: 1rem;
+            align-items: start;
         }
 
-        .container {
-            width: min(100%, 720px);
+        .poster,
+        .capture-card,
+        .confirmation-card {
+            border: 4px solid var(--border);
+            background: var(--paper-soft);
+            box-shadow: 10px 10px 0 var(--border);
         }
 
         .poster {
-            border: 4px solid var(--line);
-            background: #fff8ea;
-            box-shadow: 10px 10px 0 var(--line);
+            overflow: hidden;
         }
 
-        .poster-header {
-            border-bottom: 4px solid var(--line);
-            padding: clamp(1.25rem, 4vw, 2rem);
+        .poster-banner {
             background: var(--red);
-            color: #fffaf2;
+            color: #fff7ef;
+            border-bottom: 4px solid var(--border);
+            padding: clamp(1.2rem, 3vw, 2rem);
         }
 
         .eyebrow {
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 700;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.5rem;
         }
 
-        h1 {
-            font-family: "Inter Tight", system-ui, sans-serif;
-            font-size: clamp(2.2rem, 9vw, 5rem);
-            line-height: 0.9;
-            letter-spacing: 0;
+        .poster-banner h1 {
+            font-family: "Archivo Expanded", system-ui, sans-serif;
+            font-size: clamp(2rem, 7vw, 4.8rem);
+            line-height: 0.92;
             text-transform: uppercase;
         }
 
-        form {
-            padding: clamp(1.25rem, 4vw, 2rem);
-        }
-
-        .form-grid {
+        .poster-body {
+            padding: clamp(1.25rem, 3vw, 2rem);
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 1rem;
         }
 
-        .form-group {
+        .statement {
+            font-size: clamp(1rem, 2.6vw, 1.2rem);
+            color: var(--muted);
+            max-width: 52ch;
+        }
+
+        .signal-grid {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .signal-row {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.8rem;
+            align-items: start;
+            padding: 0.9rem;
+            border: 3px solid var(--border);
+            background: rgba(231, 213, 184, 0.38);
+        }
+
+        .signal-title {
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .signal-copy {
+            color: var(--muted);
+            font-size: 0.94rem;
+        }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            width: fit-content;
+            border: 3px solid var(--border);
+            background: var(--paper-deep);
+            padding: 0.7rem 0.85rem;
+            font-weight: 700;
+        }
+
+        .status-chip.good {
+            background: #d4eadf;
+        }
+
+        .status-chip.bad {
+            background: #f6d6d6;
+        }
+
+        .capture-card,
+        .confirmation-card {
+            padding: clamp(1rem, 3vw, 1.5rem);
+        }
+
+        .capture-card h2,
+        .confirmation-card h2 {
+            font-family: "Archivo Expanded", system-ui, sans-serif;
+            font-size: clamp(1.25rem, 4vw, 2rem);
+            line-height: 0.95;
+            text-transform: uppercase;
+        }
+
+        .card-copy {
+            color: var(--muted);
+            margin-top: 0.5rem;
             margin-bottom: 1rem;
         }
 
-        .form-group.full {
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.9rem;
+        }
+
+        .field {
+            display: grid;
+            gap: 0.42rem;
+        }
+
+        .field.full {
             grid-column: 1 / -1;
         }
 
-        label {
-            display: block;
-            color: var(--ink);
-            font-weight: 800;
-            margin-bottom: 0.45rem;
-        }
-
-        .hint {
-            color: var(--muted);
-            font-size: 0.88rem;
-            margin-top: 0.4rem;
+        .field label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-weight: 700;
         }
 
         input,
         select {
             width: 100%;
-            min-height: 3rem;
-            border: 2px solid var(--line);
-            background: var(--paper);
+            min-height: 3.05rem;
+            border: 3px solid var(--border);
+            background: #fffbf4;
             color: var(--ink);
             font: 500 1rem "IBM Plex Sans", system-ui, sans-serif;
-            padding: 0.75rem 0.85rem;
+            padding: 0.75rem 0.9rem;
         }
 
         input:focus,
@@ -167,92 +280,91 @@
             outline-offset: 2px;
         }
 
+        .hint {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
         .platform-group {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0.65rem;
         }
 
-        .radio-item {
+        .platform-option {
             position: relative;
         }
 
-        .radio-item input {
-            opacity: 0;
+        .platform-option input {
             position: absolute;
+            opacity: 0;
             pointer-events: none;
         }
 
-        .radio-item label {
-            border: 2px solid var(--line);
-            background: var(--paper);
+        .platform-option label {
+            min-height: 3.05rem;
+            border: 3px solid var(--border);
+            background: #fffbf4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
             cursor: pointer;
             margin: 0;
-            min-height: 3rem;
+            padding: 0.75rem 0.9rem;
+            text-align: center;
+        }
+
+        .platform-option input:checked + label {
+            background: var(--ink);
+            color: #fff7ef;
+        }
+
+        .record-zone {
+            margin-top: 1rem;
+            border: 4px solid var(--border);
+            background: rgba(231, 213, 184, 0.45);
+            padding: 1.2rem;
+            text-align: center;
+        }
+
+        .record-zone.recording {
+            background: #f4d0d0;
+        }
+
+        .record-icon {
+            width: 5rem;
+            height: 5rem;
+            margin: 0 auto 0.8rem;
             display: grid;
             place-items: center;
-            text-align: center;
-        }
-
-        .radio-item input:checked + label {
-            background: var(--ink);
-            color: #fffaf2;
-        }
-
-        .record-section {
-            border-top: 4px solid var(--line);
-            background: var(--paper-deep);
-            padding: clamp(1.5rem, 4vw, 2.25rem);
-            text-align: center;
-        }
-
-        .record-section.recording {
-            background: #f7d9d4;
-        }
-
-        .mic-icon {
-            width: 4.5rem;
-            height: 4.5rem;
+            border: 4px solid var(--border);
+            background: #fff7ef;
             color: var(--red);
-            margin-bottom: 0.75rem;
         }
 
-        .record-section.recording .mic-icon {
+        .record-zone.recording .record-icon {
             animation: pulse 1.2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
         }
 
         .timer {
             display: none;
-            font: 900 clamp(2.25rem, 8vw, 4.5rem) "Inter Tight", system-ui, sans-serif;
+            margin-bottom: 0.8rem;
+            font-family: "Archivo Expanded", system-ui, sans-serif;
+            font-size: clamp(1.8rem, 7vw, 3rem);
+            line-height: 1;
             color: var(--red);
-            font-variant-numeric: tabular-nums;
-            margin-bottom: 0.75rem;
         }
 
-        .record-section.recording .timer {
+        .record-zone.recording .timer {
             display: block;
         }
 
-        .record-btn,
-        .secondary-btn {
-            border: 3px solid var(--line);
+        .record-btn {
+            width: 100%;
             background: var(--red);
-            color: #fffaf2;
-            cursor: pointer;
-            font: 900 1rem "Inter Tight", system-ui, sans-serif;
-            min-height: 3.35rem;
-            padding: 0.8rem 1.4rem;
+            color: #fff7ef;
             text-transform: uppercase;
-        }
-
-        .record-btn:hover:not(:disabled),
-        .secondary-btn:hover {
-            background: var(--red-dark);
         }
 
         .record-btn.recording {
@@ -261,190 +373,333 @@
 
         .record-btn:disabled {
             cursor: wait;
-            opacity: 0.65;
+            opacity: 0.72;
         }
 
-        .confirmation,
         .error {
             display: none;
-            border: 4px solid var(--line);
-            background: #fff8ea;
-            box-shadow: 10px 10px 0 var(--line);
-            padding: clamp(1.5rem, 4vw, 2rem);
-            text-align: center;
+            margin-top: 1rem;
+            border: 3px solid var(--red);
+            background: #f7dcdc;
+            padding: 0.9rem 1rem;
+            color: var(--red-dark);
+            font-weight: 700;
         }
 
-        .confirmation.show,
-        .error.show {
+        .error.show,
+        .confirmation-card.show {
             display: block;
         }
 
-        .confirmation h2 {
-            color: var(--green);
-            font: 900 clamp(2rem, 7vw, 4rem) "Inter Tight", system-ui, sans-serif;
-            line-height: 0.95;
-            text-transform: uppercase;
-            margin-bottom: 0.75rem;
+        .confirmation-card {
+            display: none;
         }
 
-        .confirmation p {
+        .confirmation-card p {
             color: var(--muted);
-            margin-bottom: 1rem;
+            margin: 0.65rem 0 1rem;
         }
 
-        .error {
-            margin-top: 1rem;
-            border-color: var(--red);
-            color: var(--red-dark);
-            box-shadow: none;
-            text-align: left;
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
         }
 
-        @media (max-width: 680px) {
-            header {
+        .secondary-btn {
+            background: var(--ink);
+            color: #fff7ef;
+        }
+
+        .icon {
+            width: 1.15rem;
+            height: 1.15rem;
+            flex: 0 0 auto;
+        }
+
+        .icon.large {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+
+        @media (max-width: 980px) {
+            .shell {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .topbar {
                 align-items: stretch;
                 flex-direction: column;
             }
 
-            .form-grid,
+            .topbar-actions,
+            .action-row,
+            .field-grid,
             .platform-group {
                 grid-template-columns: 1fr;
+                flex-direction: column;
+            }
+
+            .lang-toggle {
+                width: 100%;
+            }
+
+            .lang-btn {
+                flex: 1 1 0;
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="masthead">Strike Negotiator</div>
-        <div class="lang-toggle" aria-label="Language">
-            <button class="lang-btn active" type="button" data-lang="en" aria-pressed="true">English</button>
-            <button class="lang-btn" type="button" data-lang="hi" aria-pressed="false">हिन्दी</button>
+    <header class="topbar">
+        <div>
+            <a class="brand" href="/">Strike Negotiator</a>
+            <p class="tagline" data-i18n="tagline">Voice in. Cited synthesis out.</p>
+        </div>
+        <div class="topbar-actions">
+            <a class="nav-link" href="/dashboard">
+                <span class="icon" data-icon="dashboard"></span>
+                <span data-i18n="openDashboard">Open dashboard</span>
+            </a>
+            <div class="lang-toggle" aria-label="Language">
+                <button class="lang-btn active" type="button" data-lang="en" aria-pressed="true">English</button>
+                <button class="lang-btn" type="button" data-lang="hi" aria-pressed="false">हिन्दी</button>
+            </div>
         </div>
     </header>
 
-    <main>
-        <div class="container">
-            <div id="formView" class="poster">
-                <div class="poster-header">
-                    <div class="eyebrow" data-i18n="eyebrow">Voice note intake</div>
-                    <h1 data-i18n="headline">Speak. Be counted.</h1>
+    <main class="shell">
+        <section class="poster">
+            <div class="poster-banner">
+                <div class="eyebrow" data-i18n="eyebrow">Worker intake</div>
+                <h1 data-i18n="headline">Speak once. Count together.</h1>
+            </div>
+            <div class="poster-body">
+                <p class="statement" data-i18n="statement">
+                    Record a grievance in your own voice. The platform groups it with others, turns it into cited themes, and prepares the material organizers need for negotiation.
+                </p>
+                <div id="connectionStatus" class="status-chip">
+                    <span class="icon" data-icon="activity"></span>
+                    <span data-i18n="connectionLoading">Connecting to intake API…</span>
                 </div>
+                <div class="signal-grid">
+                    <div class="signal-row">
+                        <span class="icon large" data-icon="mic"></span>
+                        <div>
+                            <div class="signal-title" data-i18n="signalOneTitle">Voice first</div>
+                            <div class="signal-copy" data-i18n="signalOneCopy">No account, no long form, no typing burden before a shift.</div>
+                        </div>
+                    </div>
+                    <div class="signal-row">
+                        <span class="icon large" data-icon="shield"></span>
+                        <div>
+                            <div class="signal-title" data-i18n="signalTwoTitle">Protected intake</div>
+                            <div class="signal-copy" data-i18n="signalTwoCopy">Phone-like worker identifiers are hashed on the backend before they ever become stored data.</div>
+                        </div>
+                    </div>
+                    <div class="signal-row">
+                        <span class="icon large" data-icon="megaphone"></span>
+                        <div>
+                            <div class="signal-title" data-i18n="signalThreeTitle">Built for leverage</div>
+                            <div class="signal-copy" data-i18n="signalThreeCopy">Themes, numbers, contradictions, and exportable briefs come out the other side.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div id="formView" class="capture-card">
+                <h2 data-i18n="cardTitle">Record your grievance</h2>
+                <p class="card-copy" data-i18n="cardCopy">The optional phone field helps the backend connect repeat grievances from the same worker across time.</p>
 
                 <form id="voiceForm">
-                    <div class="form-grid">
-                        <div class="form-group full">
-                            <label for="phone" data-i18n="phoneLabel">Phone number (optional)</label>
+                    <div class="field-grid">
+                        <div class="field full">
+                            <label for="phone">
+                                <span class="icon" data-icon="phone"></span>
+                                <span data-i18n="phoneLabel">Phone number (optional)</span>
+                            </label>
                             <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" data-i18n-placeholder="phonePlaceholder" placeholder="Used only to connect repeat grievances">
                             <p class="hint" data-i18n="phoneHint">Never stored. If blank, this browser is treated as a demo worker and repeat-worker metrics are unverified.</p>
                         </div>
 
-                        <div class="form-group">
-                            <label for="city" data-i18n="cityLabel">District</label>
+                        <div class="field">
+                            <label for="city">
+                                <span class="icon" data-icon="mapPin"></span>
+                                <span data-i18n="cityLabel">District</span>
+                            </label>
                             <select id="city" name="city"></select>
                         </div>
 
-                        <div class="form-group">
-                            <label data-i18n="platformLabel">Platform</label>
+                        <div class="field">
+                            <label>
+                                <span class="icon" data-icon="briefcase"></span>
+                                <span data-i18n="platformLabel">Platform</span>
+                            </label>
                             <div class="platform-group" id="platformGroup"></div>
                         </div>
                     </div>
 
-                    <div class="record-section" id="recordArea">
-                        <svg class="mic-icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <path fill="currentColor" d="M12 15a4 4 0 0 0 4-4V5a4 4 0 0 0-8 0v6a4 4 0 0 0 4 4Zm-2-4V5a2 2 0 0 1 4 0v6a2 2 0 0 1-4 0Zm8-1a1 1 0 1 1 2 0 8 8 0 0 1-7 7.94V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-3.06A8 8 0 0 1 4 10a1 1 0 1 1 2 0 6 6 0 0 0 12 0Z"/>
-                        </svg>
+                    <div class="record-zone" id="recordArea">
+                        <div class="record-icon">
+                            <span class="icon large" data-icon="mic"></span>
+                        </div>
                         <div class="timer" id="timer">00:00</div>
-                        <button type="button" class="record-btn" id="recordBtn" data-i18n="startRecording">Start recording</button>
+                        <button type="button" class="record-btn" id="recordBtn">
+                            <span class="icon" data-icon="record"></span>
+                            <span id="recordBtnLabel" data-i18n="startRecording">Start recording</span>
+                        </button>
                     </div>
 
                     <div class="error" id="errorMsg"></div>
                 </form>
             </div>
 
-            <div class="confirmation" id="confirmation">
+            <div class="confirmation-card" id="confirmation">
                 <h2 data-i18n="recordedTitle">Recorded</h2>
                 <p id="confirmationCopy" data-i18n="recordedCopy">Your voice note has been uploaded. Thank you.</p>
-                <button type="button" class="secondary-btn" id="recordAnotherBtn" data-i18n="recordAnother">Record another</button>
+                <div class="action-row">
+                    <a class="nav-link" id="dashboardLink" href="/dashboard">
+                        <span class="icon" data-icon="dashboard"></span>
+                        <span data-i18n="seeDashboard">See dashboard</span>
+                    </a>
+                    <button type="button" class="secondary-btn" id="recordAnotherBtn">
+                        <span class="icon" data-icon="refresh"></span>
+                        <span data-i18n="recordAnother">Record another</span>
+                    </button>
+                </div>
             </div>
-        </div>
+        </section>
     </main>
 
+    <script src="/static/icons.js"></script>
     <script>
         const strings = {
             en: {
-                eyebrow: 'Voice note intake',
-                headline: 'Speak. Be counted.',
-                phoneLabel: 'Phone number (optional)',
-                phonePlaceholder: 'Used only to connect repeat grievances',
-                phoneHint: 'Never stored. If blank, this browser is treated as a demo worker and repeat-worker metrics are unverified.',
-                cityLabel: 'District',
-                selectDistrict: 'Select district',
-                platformLabel: 'Platform',
-                startRecording: 'Start recording',
-                stopRecording: 'Stop recording',
-                uploading: 'Uploading',
-                recordedTitle: 'Recorded',
-                recordedCopy: 'Your voice note has been uploaded. Thank you.',
-                recordedDemoCopy: 'Uploaded with a browser demo ID. Worker-repeat metrics for this note are unverified.',
-                recordAnother: 'Record another',
-                micError: 'Microphone access is required. Please allow microphone access.',
-                uploadFailed: 'Upload failed.'
+                tagline: "Voice in. Cited synthesis out.",
+                openDashboard: "Open dashboard",
+                eyebrow: "Worker intake",
+                headline: "Speak once. Count together.",
+                statement: "Record a grievance in your own voice. The platform groups it with others, turns it into cited themes, and prepares the material organizers need for negotiation.",
+                connectionLoading: "Connecting to intake API…",
+                connectionReady: "Connected to intake API",
+                connectionReadyDetail: "District and platform lists are live from the backend.",
+                connectionFailed: "Could not reach the intake API.",
+                signalOneTitle: "Voice first",
+                signalOneCopy: "No account, no long form, no typing burden before a shift.",
+                signalTwoTitle: "Protected intake",
+                signalTwoCopy: "Phone-like worker identifiers are hashed on the backend before they ever become stored data.",
+                signalThreeTitle: "Built for leverage",
+                signalThreeCopy: "Themes, numbers, contradictions, and exportable briefs come out the other side.",
+                cardTitle: "Record your grievance",
+                cardCopy: "The optional phone field helps the backend connect repeat grievances from the same worker across time.",
+                phoneLabel: "Phone number (optional)",
+                phonePlaceholder: "Used only to connect repeat grievances",
+                phoneHint: "Never stored. If blank, this browser is treated as a demo worker and repeat-worker metrics are unverified.",
+                cityLabel: "District",
+                selectDistrict: "Select district",
+                platformLabel: "Platform",
+                startRecording: "Start recording",
+                stopRecording: "Stop recording",
+                uploading: "Uploading",
+                recordedTitle: "Recorded",
+                recordedCopy: "Your voice note has been uploaded. Thank you.",
+                recordedDemoCopy: "Uploaded with a browser demo ID. Repeat-worker metrics for this note remain unverified.",
+                seeDashboard: "See dashboard",
+                recordAnother: "Record another",
+                micError: "Microphone access is required. Please allow microphone access.",
+                uploadFailed: "Upload failed."
             },
             hi: {
-                eyebrow: 'आवाज़ नोट इनटेक',
-                headline: 'बोलिए. गिनती में आइए.',
-                phoneLabel: 'फ़ोन नंबर (वैकल्पिक)',
-                phonePlaceholder: 'बार-बार आई शिकायतों को जोड़ने के लिए',
-                phoneHint: 'यह कभी सेव नहीं होता. खाली छोड़ने पर यह ब्राउज़र डेमो वर्कर माना जाएगा और repeat-worker metrics अपुष्ट रहेंगी.',
-                cityLabel: 'ज़िला',
-                selectDistrict: 'ज़िला चुनें',
-                platformLabel: 'प्लैटफ़ॉर्म',
-                startRecording: 'रिकॉर्डिंग शुरू करें',
-                stopRecording: 'रिकॉर्डिंग रोकें',
-                uploading: 'अपलोड हो रहा है',
-                recordedTitle: 'रिकॉर्ड हो गया',
-                recordedCopy: 'आपकी आवाज़ नोट अपलोड हो गई. धन्यवाद.',
-                recordedDemoCopy: 'ब्राउज़र डेमो ID से अपलोड हुआ. इस नोट के repeat-worker metrics अपुष्ट हैं.',
-                recordAnother: 'एक और रिकॉर्ड करें',
-                micError: 'माइक्रोफ़ोन की अनुमति चाहिए. कृपया अनुमति दें.',
-                uploadFailed: 'अपलोड नहीं हो पाया.'
+                tagline: "आवाज़ भीतर. उद्धृत सिंथेसिस बाहर.",
+                openDashboard: "डैशबोर्ड खोलें",
+                eyebrow: "वर्कर इनटेक",
+                headline: "एक बार बोलिए. साथ में गिनिए.",
+                statement: "अपनी आवाज़ में शिकायत रिकॉर्ड कीजिए. प्लेटफ़ॉर्म उसे दूसरों के साथ जोड़ता है, उद्धृत थीम बनाता है, और वही सामग्री तैयार करता है जिसकी आयोजकों को बातचीत में ज़रूरत होती है.",
+                connectionLoading: "इनटेक API से जुड़ रहा है…",
+                connectionReady: "इनटेक API से जुड़ गया",
+                connectionReadyDetail: "ज़िले और प्लेटफ़ॉर्म की सूची सीधे बैकएंड से आ रही है.",
+                connectionFailed: "इनटेक API तक पहुँचना संभव नहीं हुआ.",
+                signalOneTitle: "आवाज़ पहले",
+                signalOneCopy: "कोई अकाउंट नहीं, कोई लंबा फ़ॉर्म नहीं, शिफ्ट से पहले टाइप करने का बोझ नहीं.",
+                signalTwoTitle: "सुरक्षित इनटेक",
+                signalTwoCopy: "फ़ोन जैसी पहचान बैकएंड में सेव होने से पहले hash कर दी जाती है.",
+                signalThreeTitle: "मोलभाव के लिए तैयार",
+                signalThreeCopy: "थीम, आँकड़े, विरोधाभास और export होने वाले briefs आगे बनते हैं.",
+                cardTitle: "अपनी शिकायत रिकॉर्ड करें",
+                cardCopy: "वैकल्पिक फ़ोन फ़ील्ड बैकएंड को एक ही worker की दोहराई गई शिकायतों को समय के साथ जोड़ने में मदद करती है.",
+                phoneLabel: "फ़ोन नंबर (वैकल्पिक)",
+                phonePlaceholder: "दोहराई गई शिकायतों को जोड़ने के लिए",
+                phoneHint: "यह कभी store नहीं होता. खाली छोड़ने पर यह browser एक demo worker माना जाएगा और repeat-worker metrics अपुष्ट रहेंगे.",
+                cityLabel: "ज़िला",
+                selectDistrict: "ज़िला चुनें",
+                platformLabel: "प्लैटफ़ॉर्म",
+                startRecording: "रिकॉर्डिंग शुरू करें",
+                stopRecording: "रिकॉर्डिंग रोकें",
+                uploading: "अपलोड हो रहा है",
+                recordedTitle: "रिकॉर्ड हो गया",
+                recordedCopy: "आपकी आवाज़ नोट अपलोड हो गई. धन्यवाद.",
+                recordedDemoCopy: "ब्राउज़र demo ID से अपलोड हुआ. इस नोट के repeat-worker metrics अपुष्ट हैं.",
+                seeDashboard: "डैशबोर्ड देखें",
+                recordAnother: "एक और रिकॉर्ड करें",
+                micError: "माइक्रोफ़ोन की अनुमति चाहिए. कृपया अनुमति दें.",
+                uploadFailed: "अपलोड नहीं हो पाया."
             }
         };
 
+        let currentLang = localStorage.getItem("ui_language") || "en";
         let metadata = { cities: [], platforms: [] };
-        let currentLang = localStorage.getItem('ui_language') || 'en';
         let mediaRecorder;
         let chunks = [];
-        let startTime;
         let timerInterval;
+        let startTime = 0;
 
-        const recordBtn = document.getElementById('recordBtn');
-        const recordArea = document.getElementById('recordArea');
-        const timer = document.getElementById('timer');
-        const formView = document.getElementById('formView');
-        const confirmation = document.getElementById('confirmation');
-        const confirmationCopy = document.getElementById('confirmationCopy');
-        const errorMsg = document.getElementById('errorMsg');
-        const citySelect = document.getElementById('city');
-        const platformGroup = document.getElementById('platformGroup');
-        const phoneInput = document.getElementById('phone');
+        const recordArea = document.getElementById("recordArea");
+        const recordBtn = document.getElementById("recordBtn");
+        const recordBtnLabel = document.getElementById("recordBtnLabel");
+        const timer = document.getElementById("timer");
+        const phoneInput = document.getElementById("phone");
+        const citySelect = document.getElementById("city");
+        const platformGroup = document.getElementById("platformGroup");
+        const formView = document.getElementById("formView");
+        const confirmation = document.getElementById("confirmation");
+        const confirmationCopy = document.getElementById("confirmationCopy");
+        const dashboardLink = document.getElementById("dashboardLink");
+        const connectionStatus = document.getElementById("connectionStatus");
+        const errorMsg = document.getElementById("errorMsg");
 
-        document.addEventListener('DOMContentLoaded', init);
-        recordBtn.addEventListener('click', toggleRecording);
-        document.getElementById('recordAnotherBtn').addEventListener('click', resetForAnother);
+        document.addEventListener("DOMContentLoaded", init);
+        recordBtn.addEventListener("click", toggleRecording);
+        document.getElementById("recordAnotherBtn").addEventListener("click", resetForAnother);
+        citySelect.addEventListener("change", () => setDashboardLink(currentSynthesisScope()));
+        platformGroup.addEventListener("change", () => setDashboardLink(currentSynthesisScope()));
 
         async function init() {
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
-            });
-            await loadMetadata();
+            window.hydrateStrikeIcons();
+            wireLanguageToggle();
             setLanguage(currentLang, false);
+            try {
+                await loadMetadata();
+                setDashboardLink(currentSynthesisScope());
+                setConnectionStatus("good", `${t("connectionReady")} ${t("connectionReadyDetail")}`);
+            } catch (error) {
+                setConnectionStatus("bad", t("connectionFailed"));
+                showError(t("connectionFailed"));
+            }
         }
 
-        async function loadMetadata() {
-            const response = await fetch('/metadata');
-            if (!response.ok) throw new Error('Metadata failed');
-            metadata = await response.json();
+        function wireLanguageToggle() {
+            document.querySelectorAll(".lang-btn").forEach((btn) => {
+                btn.addEventListener("click", () => setLanguage(btn.dataset.lang));
+            });
         }
 
         function t(key) {
@@ -453,51 +708,74 @@
 
         function setLanguage(lang, persist = true) {
             currentLang = lang;
-            if (persist) localStorage.setItem('ui_language', lang);
+            if (persist) {
+                localStorage.setItem("ui_language", lang);
+            }
             document.documentElement.lang = lang;
-
-            document.querySelectorAll('.lang-btn').forEach(btn => {
+            document.querySelectorAll(".lang-btn").forEach((btn) => {
                 const active = btn.dataset.lang === lang;
-                btn.classList.toggle('active', active);
-                btn.setAttribute('aria-pressed', String(active));
+                btn.classList.toggle("active", active);
+                btn.setAttribute("aria-pressed", String(active));
             });
-
-            document.querySelectorAll('[data-i18n]').forEach(node => {
+            document.querySelectorAll("[data-i18n]").forEach((node) => {
                 node.textContent = t(node.dataset.i18n);
             });
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(node => {
-                node.setAttribute('placeholder', t(node.dataset.i18nPlaceholder));
+            document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+                node.setAttribute("placeholder", t(node.dataset.i18nPlaceholder));
             });
+            if (metadata.cities.length) {
+                populateOptions();
+            }
+            setRecordButtonState(mediaRecorder?.state === "recording" ? "recording" : recordBtn.disabled ? "uploading" : "idle");
+        }
+
+        async function loadMetadata() {
+            const response = await fetch("/metadata", { cache: "no-store" });
+            if (!response.ok) {
+                throw new Error("metadata");
+            }
+            metadata = await response.json();
             populateOptions();
-            setRecordButtonState(mediaRecorder?.state === 'recording' ? 'recording' : recordBtn.disabled ? 'uploading' : 'idle');
         }
 
         function populateOptions() {
             const selectedCity = citySelect.value;
-            citySelect.innerHTML = `<option value="">${t('selectDistrict')}</option>` + metadata.cities.map(city => {
-                const label = currentLang === 'hi' ? city.label_hi : city.label_en;
-                return `<option value="${city.value}">${label}</option>`;
-            }).join('');
+            citySelect.innerHTML = `<option value="">${t("selectDistrict")}</option>` +
+                metadata.cities.map((city) => {
+                    const label = currentLang === "hi" ? city.label_hi : city.label_en;
+                    return `<option value="${escapeHtml(city.value)}">${escapeHtml(label)}</option>`;
+                }).join("");
             citySelect.value = selectedCity;
 
-            const selectedPlatform = document.querySelector('input[name="platform"]:checked')?.value || '';
-            platformGroup.innerHTML = metadata.platforms.map(platform => {
-                const label = currentLang === 'hi' ? platform.label_hi : platform.label_en;
+            const selectedPlatform = document.querySelector('input[name="platform"]:checked')?.value || "";
+            platformGroup.innerHTML = metadata.platforms.map((platform) => {
+                const label = currentLang === "hi" ? platform.label_hi : platform.label_en;
                 return `
-                    <div class="radio-item">
+                    <div class="platform-option">
                         <input type="radio" id="platform-${platform.value}" name="platform" value="${platform.value}">
-                        <label for="platform-${platform.value}">${label}</label>
+                        <label for="platform-${platform.value}">
+                            <span class="icon" data-icon="briefcase"></span>
+                            <span>${escapeHtml(label)}</span>
+                        </label>
                     </div>
                 `;
-            }).join('');
+            }).join("");
+            window.hydrateStrikeIcons(platformGroup);
             if (selectedPlatform) {
                 const restored = document.querySelector(`input[name="platform"][value="${selectedPlatform}"]`);
-                if (restored) restored.checked = true;
+                if (restored) {
+                    restored.checked = true;
+                }
             }
         }
 
+        function setConnectionStatus(kind, text) {
+            connectionStatus.className = `status-chip ${kind}`;
+            connectionStatus.lastElementChild.textContent = text;
+        }
+
         async function toggleRecording() {
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
                 await startRecording();
             } else {
                 stopRecording();
@@ -507,122 +785,155 @@
         async function startRecording() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
                 chunks = [];
-
-                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.ondataavailable = (event) => chunks.push(event.data);
                 mediaRecorder.onstop = handleStop;
-
                 mediaRecorder.start();
                 startTime = Date.now();
-
-                recordArea.classList.add('recording');
-                recordBtn.classList.add('recording');
-                setRecordButtonState('recording');
-                timerInterval = setInterval(updateTimer, 100);
-            } catch (err) {
-                showError(t('micError'));
+                recordArea.classList.add("recording");
+                recordBtn.classList.add("recording");
+                setRecordButtonState("recording");
+                timerInterval = setInterval(updateTimer, 150);
+            } catch (error) {
+                showError(t("micError"));
             }
         }
 
         function stopRecording() {
             mediaRecorder.stop();
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            mediaRecorder.stream.getTracks().forEach((track) => track.stop());
             clearInterval(timerInterval);
-
-            recordArea.classList.remove('recording');
-            recordBtn.classList.remove('recording');
+            recordArea.classList.remove("recording");
+            recordBtn.classList.remove("recording");
             recordBtn.disabled = true;
-            setRecordButtonState('uploading');
+            setRecordButtonState("uploading");
         }
 
         function updateTimer() {
             const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
-            const secs = (elapsed % 60).toString().padStart(2, '0');
+            const mins = Math.floor(elapsed / 60).toString().padStart(2, "0");
+            const secs = (elapsed % 60).toString().padStart(2, "0");
             timer.textContent = `${mins}:${secs}`;
         }
 
         function handleStop() {
-            const blob = new Blob(chunks, { type: 'audio/webm' });
+            const blob = new Blob(chunks, { type: "audio/webm" });
             uploadAudio(blob);
         }
 
         async function uploadAudio(blob) {
             const phone = phoneInput.value.trim();
             const usedDemoSecret = phone.length === 0;
+            const synthesisScope = currentSynthesisScope();
             const formData = new FormData();
+            formData.append("worker_secret", phone || getBrowserDemoSecret());
+            formData.append("audio", blob, "recording.webm");
+            formData.append("language_hint", currentLang);
 
-            formData.append('worker_secret', phone || getBrowserDemoSecret());
-            formData.append('audio', blob, 'recording.webm');
-            formData.append('language_hint', currentLang);
-
-            if (citySelect.value) formData.append('city_bucket', citySelect.value);
+            if (citySelect.value) {
+                formData.append("city_bucket", citySelect.value);
+            }
             const platform = document.querySelector('input[name="platform"]:checked')?.value;
-            if (platform) formData.append('platform', platform);
+            if (platform) {
+                formData.append("platform", platform);
+            }
 
             try {
-                const response = await fetch('/ingest', { method: 'POST', body: formData });
+                const response = await fetch("/ingest", { method: "POST", body: formData });
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.detail || t('uploadFailed'));
+                    throw new Error(error.detail || t("uploadFailed"));
                 }
-
-                formView.style.display = 'none';
-                confirmation.classList.add('show');
-                confirmationCopy.dataset.i18n = usedDemoSecret ? 'recordedDemoCopy' : 'recordedCopy';
-                confirmationCopy.textContent = usedDemoSecret ? t('recordedDemoCopy') : t('recordedCopy');
-                triggerSynthesis();
-            } catch (err) {
-                showError(err.message);
+                await triggerSynthesis(synthesisScope);
+                setDashboardLink(synthesisScope);
+                formView.style.display = "none";
+                confirmation.classList.add("show");
+                confirmationCopy.dataset.i18n = usedDemoSecret ? "recordedDemoCopy" : "recordedCopy";
+                confirmationCopy.textContent = usedDemoSecret ? t("recordedDemoCopy") : t("recordedCopy");
+            } catch (error) {
                 recordBtn.disabled = false;
-                setRecordButtonState('idle');
+                setRecordButtonState("idle");
+                showError(error.message);
             }
         }
 
-        async function triggerSynthesis() {
+        function currentSynthesisScope() {
+            const scope = {};
+            if (citySelect.value) {
+                scope.city = citySelect.value;
+            }
+            const platform = document.querySelector('input[name="platform"]:checked')?.value;
+            if (platform) {
+                scope.platform = platform;
+            }
+            return scope;
+        }
+
+        function setDashboardLink(scope = {}) {
+            const params = new URLSearchParams();
+            if (scope.city) {
+                params.set("city", scope.city);
+            }
+            if (scope.platform) {
+                params.set("platform", scope.platform);
+            }
+            dashboardLink.href = params.toString() ? `/dashboard?${params.toString()}` : "/dashboard";
+        }
+
+        async function triggerSynthesis(scope = {}) {
             try {
-                await fetch('/syntheses', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
+                await fetch("/syntheses", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(scope)
                 });
-            } catch (err) {
-                console.warn('Background synthesis failed:', err);
+            } catch (error) {
+                console.warn("Background synthesis failed:", error);
             }
         }
 
         function getBrowserDemoSecret() {
-            let secret = localStorage.getItem('demo_worker_secret');
+            let secret = localStorage.getItem("demo_worker_secret");
             if (!secret) {
-                secret = 'demo_browser_' + Math.random().toString(36).slice(2, 15);
-                localStorage.setItem('demo_worker_secret', secret);
+                secret = `demo_browser_${Math.random().toString(36).slice(2, 15)}`;
+                localStorage.setItem("demo_worker_secret", secret);
             }
             return secret;
         }
 
         function setRecordButtonState(state) {
-            const labels = {
-                idle: t('startRecording'),
-                recording: t('stopRecording'),
-                uploading: t('uploading')
-            };
-            recordBtn.textContent = labels[state];
+            const label = {
+                idle: t("startRecording"),
+                recording: t("stopRecording"),
+                uploading: t("uploading")
+            }[state];
+            recordBtnLabel.textContent = label;
         }
 
         function resetForAnother() {
-            confirmation.classList.remove('show');
-            formView.style.display = 'block';
-            errorMsg.classList.remove('show');
-            timer.textContent = '00:00';
+            confirmation.classList.remove("show");
+            formView.style.display = "block";
+            errorMsg.classList.remove("show");
+            timer.textContent = "00:00";
             recordBtn.disabled = false;
-            setRecordButtonState('idle');
+            setRecordButtonState("idle");
+            setDashboardLink(currentSynthesisScope());
         }
 
         function showError(message) {
             errorMsg.textContent = message;
-            errorMsg.classList.add('show');
-            setTimeout(() => errorMsg.classList.remove('show'), 5000);
+            errorMsg.classList.add("show");
+            setTimeout(() => errorMsg.classList.remove("show"), 5000);
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
         }
     </script>
 </body>

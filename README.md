@@ -84,6 +84,7 @@ UI and metadata:
 - `GET /` worker voice-note page
 - `GET /dashboard` organizer dashboard page
 - `GET /metadata` canonical city and platform lists used by frontend
+- `GET /dashboard/state` parsed dashboard data plus recent grievances for the current filter
 - `GET /health` health check
 
 Core workflow:
