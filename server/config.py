@@ -7,13 +7,22 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_HASH_SALT = "dev-salt-change-me"
 
 
+def _env_or_default(name: str, default: str | Path) -> str | Path:
+    value = os.getenv(name)
+    if value is None or not value.strip():
+        return default
+    return value
+
+
 class Settings:
     def __init__(self) -> None:
-        self.data_dir = Path(os.getenv("STRIKE_DATA_DIR", ROOT_DIR / "data"))
-        self.audio_dir = Path(os.getenv("STRIKE_AUDIO_DIR", self.data_dir / "audio"))
-        self.database_url = os.getenv(
-            "STRIKE_DB_URL",
-            f"sqlite:///{self.data_dir / 'strike.db'}",
+        self.data_dir = Path(_env_or_default("STRIKE_DATA_DIR", ROOT_DIR / "data"))
+        self.audio_dir = Path(_env_or_default("STRIKE_AUDIO_DIR", self.data_dir / "audio"))
+        self.database_url = str(
+            _env_or_default(
+                "STRIKE_DB_URL",
+                f"sqlite:///{self.data_dir / 'strike.db'}",
+            )
         )
         self.hash_salt = os.getenv("STRIKE_HASH_SALT")
         if not self.hash_salt or self.hash_salt == DEFAULT_HASH_SALT:

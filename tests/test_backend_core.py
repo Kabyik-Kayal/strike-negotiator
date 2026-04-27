@@ -82,6 +82,20 @@ def test_settings_reject_missing_or_default_hash_salt(monkeypatch):
         raise AssertionError("Settings accepted the default STRIKE_HASH_SALT")
 
 
+def test_settings_ignore_blank_optional_env_vars(monkeypatch):
+    get_settings.cache_clear()
+    monkeypatch.setenv("STRIKE_HASH_SALT", TEST_HASH_SALT)
+    monkeypatch.setenv("STRIKE_DATA_DIR", "")
+    monkeypatch.setenv("STRIKE_AUDIO_DIR", "   ")
+    monkeypatch.setenv("STRIKE_DB_URL", "")
+
+    settings = get_settings()
+
+    assert settings.data_dir.name == "data"
+    assert settings.audio_dir == settings.data_dir / "audio"
+    assert settings.database_url == f"sqlite:///{settings.data_dir / 'strike.db'}"
+
+
 def test_grievance_read_omits_private_fields(tmp_path, monkeypatch):
     configure_test_database(tmp_path, monkeypatch)
     client = TestClient(app)
