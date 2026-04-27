@@ -35,11 +35,13 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
 
-# Required
-$env:STRIKE_HASH_SALT = "replace-with-a-long-random-secret"
+# Create your local env file (if needed)
+Copy-Item .env.example .env
 
-# Optional (enables live Claude calls)
-$env:ANTHROPIC_API_KEY = "your-key"
+# If you prefer shell exports over .env, set values here:
+# $env:STRIKE_HASH_SALT = "replace-with-a-long-random-secret"
+# $env:OPENAI_API_KEY = "your-openai-key"
+# $env:ANTHROPIC_API_KEY = "your-anthropic-key"
 
 uvicorn server.main:app --reload
 ```
@@ -62,6 +64,13 @@ strike-server
 ## Configuration
 
 `STRIKE_HASH_SALT` is mandatory and must not be the default placeholder value.
+
+Runtime behavior by key:
+
+- `OPENAI_API_KEY` or `STRIKE_OPENAI_API_KEY` enables real Whisper transcription for audio ingest.
+- `ANTHROPIC_API_KEY` or `STRIKE_ANTHROPIC_API_KEY` enables model-backed synthesis stages.
+- Without OpenAI key, `/ingest` requires `fallback_transcript` (demo mode).
+- Without Anthropic key, synthesis falls back to deterministic local logic.
 
 Environment variables:
 
@@ -106,6 +115,13 @@ Core workflow:
 - `POST /exports` create/get export from synthesis (`press_release`, `demand_list`, `brief`)
 - `GET /exports/{export_id}` retrieve one export row
 
+`GET /dashboard/state` query params:
+
+- `city` optional city filter
+- `platform` optional platform filter
+- `since` optional unix timestamp lower bound
+- `recent_limit` optional recent grievance preview count (capped in backend)
+
 OpenAPI docs are available at `/docs` when the server is running.
 
 ## Synthesis behavior
@@ -117,6 +133,9 @@ If a Claude key is present, the pipeline attempts model-backed stages with
 strict JSON contracts. If Claude is unavailable, rate-limited, or returns bad
 JSON, the code falls back to deterministic local logic so the app remains
 functional and tests remain offline-safe.
+
+The worker intake page triggers a background synthesis call after successful
+audio upload, scoped to selected city and platform.
 
 Guardrails enforced in code:
 
@@ -138,6 +157,8 @@ Useful options:
 - `--seed <int>` repeatable synthetic dataset
 - `--model <name>` override Claude model
 - `--base-url <url>` target a non-default API host
+
+Note: without Anthropic credentials, run seeding with `--offline`.
 
 Example offline run:
 

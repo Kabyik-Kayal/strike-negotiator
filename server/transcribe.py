@@ -7,11 +7,6 @@ from typing import Any
 
 from anyio import to_thread
 
-try:
-    from openai import OpenAI
-except Exception:  # pragma: no cover - runtime fallback when dependency is absent
-    OpenAI = None
-
 
 class TranscriptionUnavailable(RuntimeError):
     pass
@@ -24,118 +19,52 @@ class TranscriptionResult:
     transcript_raw: str | None = None
 
 
-def _whisper_api_key() -> str | None:
-    return os.getenv("OPENAI_API_KEY") or os.getenv("STRIKE_OPENAI_API_KEY")
+def _local_whisper_model_name() -> str:
+    return os.getenv("STRIKE_LOCAL_WHISPER_MODEL", "base")
 
 
-def _whisper_model() -> str:
-    return os.getenv("STRIKE_WHISPER_MODEL", "whisper-1")
+_local_model_cache: dict[str, Any] = {}
 
 
-def _get_client() -> Any:
-    api_key = _whisper_api_key()
-    if not api_key:
-        raise TranscriptionUnavailable(
-            "No transcriber is configured. Set OPENAI_API_KEY (or STRIKE_OPENAI_API_KEY), "
-            "or pass a fallback transcript in demo mode."
-        )
-    if OpenAI is None:
-        raise TranscriptionUnavailable(
-            "openai package is not installed. Install dependencies to enable Whisper transcription."
-        )
-    return OpenAI(api_key=api_key)
+def _get_local_model(model_name: str) -> Any:
+    if model_name not in _local_model_cache:
+        try:
+            import whisper as _whisper
+        except ImportError:
+            raise TranscriptionUnavailable(
+                "openai-whisper is not installed. Run: pip install openai-whisper"
+            )
+        _local_model_cache[model_name] = _whisper.load_model(model_name)
+    return _local_model_cache[model_name]
 
 
-def _extract_text(result: Any) -> str:
-    if isinstance(result, str):
-        return result.strip()
-
-    text = getattr(result, "text", None)
-    if isinstance(text, str):
-        return text.strip()
-
-    if isinstance(result, dict):
-        maybe_text = result.get("text")
-        if isinstance(maybe_text, str):
-            return maybe_text.strip()
-
-    raise TranscriptionUnavailable("Whisper response did not include transcript text.")
-
-
-def _extract_language(result: Any, language_hint: str | None) -> str:
-    language = getattr(result, "language", None)
-    if isinstance(language, str) and language.strip():
-        return language.strip().lower()
-
-    if isinstance(result, dict):
-        maybe_language = result.get("language")
-        if isinstance(maybe_language, str) and maybe_language.strip():
-            return maybe_language.strip().lower()
-
-    if language_hint and language_hint.strip():
-        return language_hint.strip().lower()
-
-    return "unknown"
-
-
-def _transcribe_with_whisper(
+def _transcribe_with_local_whisper(
     audio_path: Path,
     language_hint: str | None,
 ) -> TranscriptionResult:
     if not audio_path.exists():
         raise TranscriptionUnavailable(f"Audio file does not exist: {audio_path}")
 
-    client = _get_client()
-    model = _whisper_model()
+    model_name = _local_whisper_model_name()
+    model = _get_local_model(model_name)
 
-    try:
-        # Pass 1: detect language from the uploaded audio.
-        with audio_path.open("rb") as audio_file:
-            detection = client.audio.transcriptions.create(
-                model=model,
-                file=audio_file,
-                response_format="verbose_json",
-            )
-        detected_language = _extract_language(detection, language_hint)
+    # Pass 1+2: transcribe in original language; local whisper detects language automatically.
+    raw_result = model.transcribe(str(audio_path))
+    transcript_raw = raw_result["text"].strip()
+    detected_language = raw_result.get("language") or language_hint or "unknown"
 
-        # Pass 2: transcribe in the detected language.
-        with audio_path.open("rb") as audio_file:
-            if detected_language != "unknown":
-                raw_transcription = client.audio.transcriptions.create(
-                    model=model,
-                    file=audio_file,
-                    language=detected_language,
-                    response_format="json",
-                )
-            else:
-                raw_transcription = client.audio.transcriptions.create(
-                    model=model,
-                    file=audio_file,
-                    response_format="json",
-                )
-        transcript_raw = _extract_text(raw_transcription)
+    # Pass 3: translate to English when source is not English.
+    if detected_language not in ("en", "english"):
+        translated_result = model.transcribe(str(audio_path), task="translate")
+        transcript_english = translated_result["text"].strip()
+    else:
+        transcript_english = transcript_raw
 
-        # Pass 3: translate transcript to English for canonical pipeline input.
-        with audio_path.open("rb") as audio_file:
-            translated = client.audio.translations.create(
-                model=model,
-                file=audio_file,
-                response_format="json",
-            )
-        transcript_english = _extract_text(translated)
-
-        if not transcript_english:
-            transcript_english = transcript_raw
-
-        return TranscriptionResult(
-            language=detected_language,
-            transcript=transcript_english,
-            transcript_raw=transcript_raw,
-        )
-    except TranscriptionUnavailable:
-        raise
-    except Exception as exc:  # pragma: no cover - depends on external API behavior
-        raise TranscriptionUnavailable(f"Whisper API failed for {audio_path}: {exc}") from exc
+    return TranscriptionResult(
+        language=detected_language,
+        transcript=transcript_english or transcript_raw,
+        transcript_raw=transcript_raw,
+    )
 
 
 async def transcribe_audio(
@@ -150,4 +79,4 @@ async def transcribe_audio(
             transcript_raw=fallback_transcript,
         )
 
-    return await to_thread.run_sync(_transcribe_with_whisper, audio_path, language_hint)
+    return await to_thread.run_sync(_transcribe_with_local_whisper, audio_path, language_hint)
