@@ -21,8 +21,12 @@ and four tables: `grievance`, `filing_chunk`, `synthesis`, and `export`.
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
+$env:STRIKE_HASH_SALT = "replace-this-with-a-long-random-secret"
 uvicorn server.main:app --reload
 ```
+
+`STRIKE_HASH_SALT` is required. The backend refuses to start without a
+non-default value because worker phone-like secrets are HMAC-hashed at intake.
 
 Then check:
 

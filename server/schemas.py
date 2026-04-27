@@ -26,10 +26,8 @@ class GrievanceRead(BaseModel):
     language: str
     city_bucket: str | None
     platform: str | None
-    audio_path: str | None
     transcript: str
     transcript_raw: str | None
-    worker_hash: str
 
 
 class IngestResponse(BaseModel):
@@ -79,4 +77,3 @@ class ExportRead(BaseModel):
     kind: ExportKind
     body_md: str
     created_at: int
-

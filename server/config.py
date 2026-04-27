@@ -4,6 +4,7 @@ import os
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_HASH_SALT = "dev-salt-change-me"
 
 
 class Settings:
@@ -14,7 +15,11 @@ class Settings:
             "STRIKE_DB_URL",
             f"sqlite:///{self.data_dir / 'strike.db'}",
         )
-        self.hash_salt = os.getenv("STRIKE_HASH_SALT", "dev-salt-change-me")
+        self.hash_salt = os.getenv("STRIKE_HASH_SALT")
+        if not self.hash_salt or self.hash_salt == DEFAULT_HASH_SALT:
+            raise RuntimeError(
+                "STRIKE_HASH_SALT must be set to a non-default value before startup."
+            )
         self.max_audio_bytes = int(os.getenv("STRIKE_MAX_AUDIO_BYTES", str(15 * 1024 * 1024)))
 
     def ensure_runtime_dirs(self) -> None:
@@ -25,4 +30,3 @@ class Settings:
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
