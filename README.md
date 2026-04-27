@@ -28,6 +28,13 @@ uvicorn server.main:app --reload
 `STRIKE_HASH_SALT` is required. The backend refuses to start without a
 non-default value because worker phone-like secrets are HMAC-hashed at intake.
 
+`pyproject.toml` is the dependency source of truth. `requirements.txt` is kept
+for quick setup and is generated with:
+
+```powershell
+python scripts/export_requirements.py > requirements.txt
+```
+
 Then check:
 
 ```powershell
@@ -37,7 +44,8 @@ curl http://127.0.0.1:8000/health
 ## Useful endpoints
 
 - `POST /ingest/text` stores a transcript directly. Use this for synthetic data
-  and backend tests.
+  and backend tests. The `source` field is required so real grievances are not
+  silently mislabeled as synthetic.
 - `POST /ingest` stores an audio upload and accepts `fallback_transcript` until
   the Whisper wrapper is connected.
 - `GET /grievances` lists stored grievance rows.
