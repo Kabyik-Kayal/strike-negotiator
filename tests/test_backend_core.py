@@ -115,10 +115,12 @@ def test_frontend_routes_and_metadata_are_served(tmp_path, monkeypatch):
     form_response = client.get("/")
     dashboard_response = client.get("/dashboard")
     metadata_response = client.get("/metadata")
+    dashboard_state_response = client.get("/dashboard/state")
 
     assert form_response.status_code == 200
     assert dashboard_response.status_code == 200
     assert metadata_response.status_code == 200
+    assert dashboard_state_response.status_code == 200
 
     metadata = metadata_response.json()
     city_values = [city["value"] for city in metadata["cities"]]
@@ -126,6 +128,34 @@ def test_frontend_routes_and_metadata_are_served(tmp_path, monkeypatch):
     assert "Bengaluru Urban" in city_values
     assert "Mumbai Suburban" in city_values
     assert "north-delhi" not in city_values
+
+
+def test_dashboard_state_returns_recent_grievances_and_scope(tmp_path, monkeypatch):
+    configure_test_database(tmp_path, monkeypatch)
+    client = TestClient(app)
+
+    client.post(
+        "/ingest/text",
+        json={
+            "worker_secret": "worker-1",
+            "language": "en",
+            "transcript": "Rates dropped again after the latest update.",
+            "city_bucket": "Delhi",
+            "platform": "swiggy",
+            "source": "synthetic",
+        },
+    )
+
+    response = client.get("/dashboard/state?city=Delhi&platform=swiggy&recent_limit=4")
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert payload["scope"] == {"city": "Delhi", "platform": "swiggy"}
+    assert payload["grievance_count"] == 1
+    assert len(payload["recent_grievances"]) == 1
+    assert payload["recent_grievances"][0]["platform"] == "swiggy"
+    assert payload["output"] == {"themes": [], "metrics": [], "findings": [], "exports": {}}
 
 
 def test_text_ingest_requires_explicit_source(tmp_path, monkeypatch):
