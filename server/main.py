@@ -25,12 +25,18 @@ from server.schemas import (
     TextIngestRequest,
 )
 from server.synthesize import create_export, run_synthesis
-from server.transcribe import TranscriptionUnavailable
+from server.transcribe import TranscriptionUnavailable, _get_local_model, _local_whisper_model_name
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    # Load the Whisper model at startup so the first audio request isn't slow.
+    try:
+        from anyio import to_thread
+        await to_thread.run_sync(_get_local_model, _local_whisper_model_name())
+    except Exception:
+        pass  # missing dependency or network — transcription will fail at request time with a clear error
     yield
 
 

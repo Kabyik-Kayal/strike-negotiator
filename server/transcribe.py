@@ -45,26 +45,31 @@ def _transcribe_with_local_whisper(
     if not audio_path.exists():
         raise TranscriptionUnavailable(f"Audio file does not exist: {audio_path}")
 
-    model_name = _local_whisper_model_name()
-    model = _get_local_model(model_name)
+    try:
+        model_name = _local_whisper_model_name()
+        model = _get_local_model(model_name)
 
-    # Pass 1+2: transcribe in original language; local whisper detects language automatically.
-    raw_result = model.transcribe(str(audio_path))
-    transcript_raw = raw_result["text"].strip()
-    detected_language = raw_result.get("language") or language_hint or "unknown"
+        # Pass 1+2: transcribe in original language; local whisper detects language automatically.
+        raw_result = model.transcribe(str(audio_path))
+        transcript_raw = raw_result["text"].strip()
+        detected_language = raw_result.get("language") or language_hint or "unknown"
 
-    # Pass 3: translate to English when source is not English.
-    if detected_language not in ("en", "english"):
-        translated_result = model.transcribe(str(audio_path), task="translate")
-        transcript_english = translated_result["text"].strip()
-    else:
-        transcript_english = transcript_raw
+        # Pass 3: translate to English when source is not English.
+        if detected_language not in ("en", "english"):
+            translated_result = model.transcribe(str(audio_path), task="translate")
+            transcript_english = translated_result["text"].strip()
+        else:
+            transcript_english = transcript_raw
 
-    return TranscriptionResult(
-        language=detected_language,
-        transcript=transcript_english or transcript_raw,
-        transcript_raw=transcript_raw,
-    )
+        return TranscriptionResult(
+            language=detected_language,
+            transcript=transcript_english or transcript_raw,
+            transcript_raw=transcript_raw,
+        )
+    except TranscriptionUnavailable:
+        raise
+    except Exception as exc:
+        raise TranscriptionUnavailable(f"Local Whisper failed for {audio_path.name}: {exc}") from exc
 
 
 async def transcribe_audio(
