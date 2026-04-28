@@ -11,7 +11,7 @@ except Exception:  # pragma: no cover - handled at runtime for offline fallback
     Anthropic = None
 
 
-DEFAULT_MODEL = "claude-3-5-sonnet-latest"
+DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
 
 class ClaudeUnavailable(RuntimeError):

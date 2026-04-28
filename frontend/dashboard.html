@@ -403,25 +403,40 @@
 
         function renderFinding(findings) {
             const container = document.getElementById("findingPanel");
-            const hit = findings.find((f) => f.verdict === "contradiction") || findings[0];
+            const hit = findings.find((f) => f.verdict === "contradiction") || findings.find((f) => f.verdict === "support");
             if (!hit) {
-                container.innerHTML = '<div class="text-muted font-bold text-sm">No filing contradiction yet.</div>';
+                container.innerHTML = '<div class="text-muted font-bold text-sm">No contradiction found in current synthesis. Run synthesis with more grievances or try a different filter.</div>';
                 return;
             }
-            const title = hit.verdict === "contradiction" ? "Contradiction found" : `${hit.verdict} detected`;
+            const isContradiction = hit.verdict === "contradiction";
+            const stateIcon = isContradiction ? "warning-outline" : "checkmark-circle-outline";
+            const stateLabel = isContradiction ? "Contradiction found" : "Filing supports workers";
+            const stateColor = isContradiction ? "background:rgba(178,34,34,0.1)" : "background:rgba(34,139,34,0.1)";
+
+            // Format worker metric: strip prefix, keep the key numbers
+            const rawMetric = hit.worker_metric || "";
+            const workerDisplay = rawMetric
+                .replace("median reported numeric claim:", "Median claim:")
+                .replace(/\(range ([^ ]+) to ([^)]+)\)/, "· range $1 – $2");
+
+            // Summary: use the stored summary but strip robotic suffix
+            const summary = (hit.summary || "")
+                .replace(/: filing passage evaluated as \w+\.$/, ".")
+                .replace(/: workers report (.+?) — filing claims (.+)\.$/, ": workers report $1. The filing claims $2.");
+
             container.innerHTML = `<div class="finding-card">
-                <div class="finding-state">
-                    <ion-icon name="warning-outline" style="font-size:0.85rem"></ion-icon>
-                    <span>${escapeHtml(title)}</span>
+                <div class="finding-state" style="${stateColor}">
+                    <ion-icon name="${stateIcon}" style="font-size:0.85rem"></ion-icon>
+                    <span>${escapeHtml(stateLabel)}</span>
                 </div>
-                <div class="finding-title">${escapeHtml(hit.summary || hit.worker_metric || "No summary available.")}</div>
-                <div class="comparison-grid">
+                <div class="finding-title" style="font-size:clamp(0.95rem,2vw,1.2rem);margin-top:0.5rem">${escapeHtml(summary)}</div>
+                <div class="comparison-grid" style="margin-top:0.75rem">
                     <div class="comparison-card">
-                        <div class="comparison-k">Worker metric</div>
-                        <div class="comparison-v">${escapeHtml(hit.worker_metric || "No metric available.")}</div>
+                        <div class="comparison-k">What workers report</div>
+                        <div class="comparison-v">${escapeHtml(workerDisplay)}</div>
                     </div>
                     <div class="comparison-card">
-                        <div class="comparison-k">${escapeHtml(hit.filing_chunk_id || "Filing excerpt")}</div>
+                        <div class="comparison-k">What the filing claims</div>
                         <div class="comparison-v">${escapeHtml(hit.filing_excerpt || "No excerpt available.")}</div>
                     </div>
                 </div>
