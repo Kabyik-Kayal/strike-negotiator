@@ -109,9 +109,12 @@ def dashboard_state(
         db.scalars(grievance_stmt.order_by(desc(Grievance.created_at)).limit(min(recent_limit, 24)))
     )
 
+    # Match on city+platform only — `since` is a rolling browser timestamp that
+    # changes every second and is excluded from stored scope_filter keys.
+    lookup_scope = {k: v for k, v in scope.items() if k != "since"}
     synthesis_stmt = select(Synthesis)
-    if scope:
-        synthesis_stmt = synthesis_stmt.where(Synthesis.scope_filter == _compact_scope(scope))
+    if lookup_scope:
+        synthesis_stmt = synthesis_stmt.where(Synthesis.scope_filter == _compact_scope(lookup_scope))
     synthesis = db.scalars(synthesis_stmt.order_by(desc(Synthesis.created_at))).first()
 
     output = {"themes": [], "metrics": [], "findings": [], "exports": {}}

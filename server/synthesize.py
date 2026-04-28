@@ -810,10 +810,13 @@ def run_synthesis(db: Session, scope: SynthesisRequest) -> Synthesis:
         "exports": {},
     }
 
+    # Exclude `since` from scope_filter: it's a rolling timestamp that changes every
+    # second in the browser, so including it makes exact-match lookups always miss.
+    scope_key = {k: v for k, v in scope.model_dump(exclude_none=True).items() if k != "since"}
     synthesis = Synthesis(
         id=new_ulid(),
         created_at=int(time()),
-        scope_filter=_compact_json(scope.model_dump(exclude_none=True)),
+        scope_filter=_compact_json(scope_key),
         output_json=_compact_json(output),
         grievance_ids=_compact_json(grievance_ids),
     )

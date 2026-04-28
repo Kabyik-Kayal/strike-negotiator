@@ -1,186 +1,193 @@
-# strike-negotiator
+# Strike Negotiator
 
-FastAPI + SQLite prototype for the Strike Negotiator hackathon build.
+**Voice in. Cited synthesis out.**
 
-The service is intentionally minimal: one Python process, one SQLite database,
-and a small API surface that supports voice/text grievance intake, synthesis,
-cross-reference against filing chunks, and markdown exports.
+Strike Negotiator is a voice-first grievance platform built for gig-worker organizing. Workers record a complaint in their own language — the platform transcribes it, clusters it with similar grievances, extracts numeric claims, cross-references them against company filings, and produces a cited demand list, press release, and negotiation brief for organizers.
 
-## What is in this repo
+Built for CBC Spring 2026.
 
-- `server/` API, ingestion, synthesis pipeline, data models
-- `frontend/` static worker form and organizer dashboard pages
-- `seed/` synthetic grievance generator/loader
-- `tests/` backend, citations, and pipeline contract tests
-- `docs/` architecture and team working notes
+---
 
-## Architecture snapshot
+## How it works
 
-- Storage: SQLite with `grievance`, `filing_chunk`, `synthesis`, and `export`
-  tables.
-- Ingestion: stores text grievances directly and audio grievances through
-  transcription wrappers.
-- Synthesis: four stages run in sequence.
-  - cluster themes from grievances
-  - quantify numeric claims with citation IDs
-  - cross-reference with filing chunks
-  - draft three markdown artefacts (`demand_list`, `press_release`, `brief`)
-- Privacy baseline: worker secrets are hashed before persistence; the raw secret
-  is never stored.
+```
+Worker records voice note
+        ↓
+Local Whisper transcribes + translates to English
+        ↓
+Four-stage Claude pipeline:
+  1. Cluster   — groups grievances into themes
+  2. Quantify  — extracts median numeric claims per theme
+  3. Cross-ref — compares worker metrics against Swiggy/Zomato filings
+  4. Draft     — writes demand list, press release, brief with citations
+        ↓
+Dashboard shows themes, metrics, contradictions, and export buttons
+```
 
-## Quick start (Windows PowerShell)
+Every stage has a deterministic local fallback — the demo runs end-to-end even without an Anthropic API key.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
+---
 
-# Create your local env file (if needed)
-Copy-Item .env.example .env
+## Stack
 
-# If you prefer shell exports over .env, set values here:
-# $env:STRIKE_HASH_SALT = "replace-with-a-long-random-secret"
-# $env:OPENAI_API_KEY = "your-openai-key"
-# $env:ANTHROPIC_API_KEY = "your-anthropic-key"
+- **Backend** — FastAPI + SQLite (SQLAlchemy, no migrations)
+- **Transcription** — `openai-whisper` running locally (base model, ffmpeg required)
+- **AI pipeline** — Anthropic Claude via `anthropic` SDK, with local fallbacks
+- **Frontend** — Vanilla JS + Tailwind CSS CDN + Ionicons, served as static files
+- **Fonts** — Space Grotesk (headings) + Inter (body) via Google Fonts
 
+---
+
+## Setup
+
+### Prerequisites
+
+- Python 3.11+ in a conda environment (`hms`)
+- [ffmpeg](https://ffmpeg.org/) installed and on PATH (required by Whisper for audio decoding)
+
+```bash
+# Install ffmpeg on Windows
+winget install ffmpeg
+```
+
+### Install dependencies
+
+```bash
+conda activate hms
+pip install -r requirements.txt
+```
+
+### Environment variables
+
+Copy `.env.example` to `.env` and fill in:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Required | Description |
+|---|---|---|
+| `STRIKE_HASH_SALT` | Yes | Long random secret used to hash worker phone numbers |
+| `ANTHROPIC_API_KEY` | No | Enables Claude-backed synthesis. Falls back to local heuristics without it. |
+| `STRIKE_LOCAL_WHISPER_MODEL` | No | Whisper model size (default: `base`). Use `small` or `medium` for better accuracy. |
+
+### Start the server
+
+```bash
+conda activate hms
 uvicorn server.main:app --reload
 ```
 
-The backend auto-loads variables from repo-root `.env` at import time.
-Shell-exported variables still take precedence.
+The Whisper model pre-warms at startup. First boot downloads the model (~145 MB) if not cached.
 
-Then verify:
-
-```powershell
+Verify it's live:
+```bash
 curl http://127.0.0.1:8000/health
 ```
 
-You can also run with the project script:
+OpenAPI docs: `http://127.0.0.1:8000/docs`
 
-```powershell
-strike-server
+---
+
+## Seed data
+
+Run these in order against a running server:
+
+```bash
+# 1. Load filing chunks from Swiggy DRHP, Zomato annual report, Zomato investor call
+python -m seed.load_filings
+
+# 2. Seed targeted grievances designed to surface contradictions against the filings
+python -m seed.seed_targeted_grievances
+
+# 3. Generate broad synthetic grievances across all cities, platforms, and complaint types
+python -m seed.generate --offline        # deterministic, no API key needed
+# or
+python -m seed.generate                  # Claude-backed, richer output
 ```
 
-## Configuration
+---
 
-`STRIKE_HASH_SALT` is mandatory and must not be the default placeholder value.
+## Demo deployment
 
-Runtime behavior by key:
+### Local + Cloudflare Tunnel (recommended for demos)
 
-- `OPENAI_API_KEY` or `STRIKE_OPENAI_API_KEY` enables real Whisper transcription for audio ingest.
-- `ANTHROPIC_API_KEY` or `STRIKE_ANTHROPIC_API_KEY` enables model-backed synthesis stages.
-- Without OpenAI key, `/ingest` requires `fallback_transcript` (demo mode).
-- Without Anthropic key, synthesis falls back to deterministic local logic.
+```bash
+# Terminal 1 — server
+conda activate hms
+uvicorn server.main:app --host 127.0.0.1 --port 8000
 
-Environment variables:
+# Terminal 2 — public tunnel
+cloudflared tunnel --url http://localhost:8000
+```
 
-| Variable | Required | Default | Purpose |
-| --- | --- | --- | --- |
-| `STRIKE_HASH_SALT` | Yes | none | HMAC-style salt used for worker secret hashing. |
-| `STRIKE_DATA_DIR` | No | `<repo>/data` | Base runtime data directory. |
-| `STRIKE_AUDIO_DIR` | No | `<data_dir>/audio` | Audio file storage directory. |
-| `STRIKE_DB_URL` | No | `sqlite:///<data_dir>/strike.db` | SQLAlchemy database URL. |
-| `STRIKE_MAX_AUDIO_BYTES` | No | `15728640` | Maximum accepted upload size for audio ingest. |
-| `OPENAI_API_KEY` or `STRIKE_OPENAI_API_KEY` | No | none | Enables live Whisper audio transcription and translation. |
-| `STRIKE_WHISPER_MODEL` | No | `whisper-1` | Whisper model override for transcription and translation passes. |
-| `ANTHROPIC_API_KEY` or `STRIKE_ANTHROPIC_API_KEY` | No | none | Enables live Claude calls in synthesis and seeding. |
-| `STRIKE_ANTHROPIC_MODEL` | No | `claude-3-5-sonnet-latest` | Claude model override. |
+Cloudflare prints a public `https://xxxx.trycloudflare.com` URL. Share it with judges. Keep both terminals open.
+
+**Tips:** disable laptop sleep, have a mobile hotspot ready as backup.
+
+---
 
 ## API routes
 
-UI and metadata:
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/` | Worker intake form |
+| `GET` | `/dashboard` | Organizer dashboard |
+| `GET` | `/health` | Health check |
+| `GET` | `/metadata` | City and platform lists |
+| `GET` | `/dashboard/state` | Full dashboard payload (filters: city, platform, since, recent_limit) |
+| `POST` | `/ingest/text` | Insert a text grievance |
+| `POST` | `/ingest` | Upload and transcribe an audio grievance |
+| `GET` | `/grievances` | List grievances |
+| `GET` | `/grievances/{id}` | Get one grievance |
+| `POST` | `/filing-chunks` | Create a filing chunk |
+| `GET` | `/filing-chunks` | List filing chunks |
+| `POST` | `/syntheses` | Run synthesis for a scope (city, platform, since) |
+| `GET` | `/syntheses/latest` | Get the latest synthesis |
+| `GET` | `/syntheses/{id}` | Get one synthesis |
+| `POST` | `/exports` | Generate or reuse a markdown export |
+| `GET` | `/exports/{id}` | Get one export |
 
-- `GET /` worker voice-note page
-- `GET /dashboard` organizer dashboard page
-- `GET /metadata` canonical city and platform lists used by frontend
-- `GET /dashboard/state` parsed dashboard data plus recent grievances for the current filter
-- `GET /health` health check
+---
 
-Core workflow:
+## Project layout
 
-- `POST /ingest/text` insert a grievance from transcript text
-- `POST /ingest` insert a grievance from uploaded audio
-  - runs a three-pass Whisper flow when OpenAI key is configured
-  - pass 1: language detection
-  - pass 2: transcript in detected language (stored as `transcript_raw`)
-  - pass 3: English translation (stored as canonical `transcript`)
-  - `fallback_transcript` still works for demo/offline mode
-- `GET /grievances` list grievances with optional `city`, `platform`, `source`, `limit`
-- `GET /grievances/{grievance_id}` retrieve one grievance
-- `POST /filing-chunks` create filing chunk
-- `GET /filing-chunks` list filing chunks with optional filters
-- `POST /syntheses` run a synthesis for `{city, platform, since}` scope
-- `GET /syntheses/latest` latest synthesis row
-- `GET /syntheses/{synthesis_id}` retrieve one synthesis row
-- `POST /exports` create/get export from synthesis (`press_release`, `demand_list`, `brief`)
-- `GET /exports/{export_id}` retrieve one export row
-
-`GET /dashboard/state` query params:
-
-- `city` optional city filter
-- `platform` optional platform filter
-- `since` optional unix timestamp lower bound
-- `recent_limit` optional recent grievance preview count (capped in backend)
-
-OpenAPI docs are available at `/docs` when the server is running.
-
-## Synthesis behavior
-
-`server/synthesize.py` uses prompt templates in `server/prompts/` and the
-Anthropic wrapper in `server/claude.py`.
-
-If a Claude key is present, the pipeline attempts model-backed stages with
-strict JSON contracts. If Claude is unavailable, rate-limited, or returns bad
-JSON, the code falls back to deterministic local logic so the app remains
-functional and tests remain offline-safe.
-
-The worker intake page triggers a background synthesis call after successful
-audio upload, scoped to selected city and platform.
-
-Guardrails enforced in code:
-
-- metrics are dropped unless `n == len(grievance_ids)`
-- filing excerpts are capped to 10 words
-- source footer lists grievance IDs and filing chunk IDs with truncation
-
-## Seed synthetic grievances
-
-Run the API first, then seed:
-
-```powershell
-python seed/generate.py --count 500 --batch-size 30
+```
+server/
+  main.py          FastAPI app and all routes
+  models.py        SQLAlchemy models (grievance, filing_chunk, synthesis, export)
+  ingest.py        Audio upload handler, worker secret hashing
+  transcribe.py    Local Whisper transcription (3-pass: detect → transcribe → translate)
+  synthesize.py    Four-stage pipeline with local fallbacks
+  claude.py        Anthropic SDK wrapper with structured output enforcement
+  prompts/         cluster.md, quantify.md, crossref.md, draft.md
+frontend/
+  form.html        Worker intake (audio recording, city/platform, EN/HI toggle)
+  dashboard.html   Organizer dashboard (themes, metrics, contradiction, exports)
+  shared.css       Shared design tokens and component styles
+  utils.js         escapeHtml, relativeTime
+seed/
+  generate.py      Synthetic grievance generator (30-axis: city, platform, language, complaint)
+  load_filings.py  Chunks and loads Swiggy/Zomato filings into filing_chunk table
+  seed_targeted_grievances.py  Surgical grievances designed to trigger contradictions
+  filings/raw/     Source PDFs (Swiggy DRHP 2024, Zomato annual report, investor call)
+  filings/text/    Plain-text conversions used by the loader
+docs/
+  architecture.md  Full system spec
+tests/
+  test_pipeline.py    End-to-end synthesis contract (runs with local fallback, no API key)
+  test_citations.py   Verifies citation IDs exist and n-counts match grievance_ids length
 ```
 
-Useful options:
+---
 
-- `--offline` deterministic local text generation (no Claude)
-- `--seed <int>` repeatable synthetic dataset
-- `--model <name>` override Claude model
-- `--base-url <url>` target a non-default API host
+## Tests
 
-Note: without Anthropic credentials, run seeding with `--offline`.
-
-Example offline run:
-
-```powershell
-python seed/generate.py --count 500 --batch-size 30 --offline
-```
-
-## Run tests
-
-```powershell
+```bash
+conda activate hms
 pytest -q
 ```
 
-Current suite covers hashing/privacy, frontend routes and metadata, citation
-integrity, export source formatting, and end-to-end synthesis contract behavior.
+Both test suites run fully offline — no Anthropic API key required.
 
-## Dependency source of truth
-
-`pyproject.toml` is authoritative.
-
-`requirements.txt` is generated with:
-
-```powershell
-python scripts/export_requirements.py > requirements.txt
-```
+---
