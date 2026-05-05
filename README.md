@@ -2,64 +2,104 @@
 
 **Voice in. Cited synthesis out.**
 
-Strike Negotiator is a voice-first grievance platform built for gig-worker organizing. Workers record a complaint in their own language — the platform transcribes it, clusters it with similar grievances, extracts numeric claims, cross-references them against company filings, and produces a cited demand list, press release, and negotiation brief for organizers.
-
-Built for CBC Spring 2026.
+Strike Negotiator is an open-source platform for gig-worker labor organizing. Workers submit grievances by voice in any language; the platform transcribes, clusters, and quantifies them — then cross-references the results against company filings to surface contradictions organizers can use at the negotiation table.
 
 ---
 
-## How it works
+## Why it exists
+
+Union researchers spend days manually aggregating worker complaints, hunting through regulatory filings, and drafting demand documents. Strike Negotiator collapses that into minutes by running a four-stage AI pipeline over the raw voice data and producing fully cited outputs: demand lists, press releases, and negotiation briefs with grievance IDs attached to every claim.
+
+---
+
+## Features
+
+- **Voice-first intake** — workers record a grievance in any language; Whisper transcribes and translates automatically
+- **Four-stage synthesis pipeline** — cluster → quantify → cross-reference → draft, each stage with a deterministic local fallback
+- **Filing cross-reference** — worker metrics compared against ingested DRHP, annual report, and investor call excerpts to detect contradictions
+- **Citation integrity** — every metric and theme carries the grievance IDs it was derived from; an n-count guard drops any metric where the count and the ID list disagree
+- **Bilingual UI** — English and Hindi, switchable per session
+- **Exportable outputs** — demand list, press release, and negotiation brief as markdown, downloadable from the dashboard
+- **Privacy-preserving** — worker phone numbers are hashed before storage; audio is never persisted beyond transcription
+- **Offline-capable** — all four pipeline stages have local fallbacks; the entire system runs without an Anthropic API key
+
+---
+
+## Architecture
 
 ```
-Worker records voice note
-        ↓
-Local Whisper transcribes + translates to English
-        ↓
-Four-stage Claude pipeline:
-  1. Cluster   — groups grievances into themes
-  2. Quantify  — extracts median numeric claims per theme
-  3. Cross-ref — compares worker metrics against Swiggy/Zomato filings
-  4. Draft     — writes demand list, press release, brief with citations
-        ↓
-Dashboard shows themes, metrics, contradictions, and export buttons
+                    ┌─────────────────┐
+                    │   Worker intake │  form.html
+                    │  (voice / text) │
+                    └────────┬────────┘
+                             │ POST /ingest
+                    ┌────────▼────────┐
+                    │  Local Whisper  │  3-pass: detect → transcribe → translate
+                    │  transcription  │
+                    └────────┬────────┘
+                             │
+                    ┌────────▼────────┐
+                    │    SQLite DB    │  grievance · filing_chunk · synthesis · export
+                    └────────┬────────┘
+                             │ POST /syntheses
+              ┌──────────────▼──────────────┐
+              │     Four-stage pipeline     │
+              │  1. Cluster   (Claude / KW) │
+              │  2. Quantify  (Claude / re) │
+              │  3. Cross-ref (Claude / KW) │
+              │  4. Draft     (Claude / tpl)│
+              └──────────────┬──────────────┘
+                             │
+                    ┌────────▼────────┐
+                    │    Dashboard    │  dashboard.html · 5s polling
+                    │ themes·metrics  │
+                    │ contradictions  │
+                    │ export buttons  │
+                    └─────────────────┘
 ```
-
-Every stage has a deterministic local fallback — the demo runs end-to-end even without an Anthropic API key.
 
 ---
 
 ## Stack
 
-- **Backend** — FastAPI + SQLite (SQLAlchemy, no migrations)
-- **Transcription** — `openai-whisper` running locally (base model, ffmpeg required)
-- **AI pipeline** — Anthropic Claude via `anthropic` SDK, with local fallbacks
-- **Frontend** — Vanilla JS + Tailwind CSS CDN + Ionicons, served as static files
-- **Fonts** — Space Grotesk (headings) + Inter (body) via Google Fonts
+| Layer | Technology |
+|---|---|
+| Backend | FastAPI + SQLite (SQLAlchemy, zero migrations) |
+| Transcription | `openai-whisper` (local, ffmpeg required) |
+| AI pipeline | Anthropic Claude (`claude-3-5-sonnet-latest`) with local fallbacks |
+| Frontend | Vanilla JS · Tailwind CSS CDN · Ionicons |
+| Fonts | Space Grotesk · Inter (Google Fonts) |
 
 ---
 
-## Setup
+## Getting started
 
 ### Prerequisites
 
-- Python 3.11+ in a conda environment (`hms`)
-- [ffmpeg](https://ffmpeg.org/) installed and on PATH (required by Whisper for audio decoding)
+- Python 3.11+
+- [ffmpeg](https://ffmpeg.org/) on PATH — required by Whisper for audio decoding
 
 ```bash
-# Install ffmpeg on Windows
+# macOS
+brew install ffmpeg
+
+# Windows
 winget install ffmpeg
+
+# Ubuntu / Debian
+apt install ffmpeg
 ```
 
-### Install dependencies
+### Install
 
 ```bash
-conda activate hms
+git clone https://github.com/kabyik-kayal/strike-negotiator
+cd strike-negotiator
+python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Environment variables
-
-Copy `.env.example` to `.env` and fill in:
+### Configure
 
 ```bash
 cp .env.example .env
@@ -67,85 +107,68 @@ cp .env.example .env
 
 | Variable | Required | Description |
 |---|---|---|
-| `STRIKE_HASH_SALT` | Yes | Long random secret used to hash worker phone numbers |
-| `ANTHROPIC_API_KEY` | No | Enables Claude-backed synthesis. Falls back to local heuristics without it. |
-| `STRIKE_LOCAL_WHISPER_MODEL` | No | Whisper model size (default: `base`). Use `small` or `medium` for better accuracy. |
+| `STRIKE_HASH_SALT` | **Yes** | Secret used to hash worker identifiers before storage |
+| `ANTHROPIC_API_KEY` | Yes (Optional) | Enables Claude-backed synthesis. All stages fall back to local heuristics without it. |
+| `STRIKE_ANTHROPIC_MODEL` | No | Override the Claude model (default: `claude-3-5-sonnet-latest`) |
+| `STRIKE_LOCAL_WHISPER_MODEL` | No | Whisper model size (default: `base`; `small` or `medium` for better accuracy) |
 
-### Start the server
+### Run
 
 ```bash
-conda activate hms
 uvicorn server.main:app --reload
 ```
 
-The Whisper model pre-warms at startup. First boot downloads the model (~145 MB) if not cached.
+The Whisper model pre-warms at startup. The first boot will download the model (~145 MB) if it is not already cached.
 
-Verify it's live:
-```bash
-curl http://127.0.0.1:8000/health
-```
-
-OpenAPI docs: `http://127.0.0.1:8000/docs`
+- Intake form: `http://localhost:8000`
+- Dashboard: `http://localhost:8000/dashboard`
+- API docs: `http://localhost:8000/docs`
 
 ---
+
+## UI/VISUALS
+
+![Grievance Dashboard](assets/Workers_Dashboard.png)
+
+![Overview Dashboard](assets/Overview_Dashboard_1.png)
+
+![Overview Dashboard](assets/Overview_Dashboard_2.png)
 
 ## Seed data
 
-Run these in order against a running server:
+Run these in order with the server running:
 
 ```bash
-# 1. Load filing chunks from Swiggy DRHP, Zomato annual report, Zomato investor call
+# Load filing chunks (Swiggy DRHP, Zomato annual report, Zomato investor call)
 python -m seed.load_filings
 
-# 2. Seed targeted grievances designed to surface contradictions against the filings
+# Seed targeted grievances designed to surface contradictions
 python -m seed.seed_targeted_grievances
 
-# 3. Generate broad synthetic grievances across all cities, platforms, and complaint types
-python -m seed.generate --offline        # deterministic, no API key needed
-# or
-python -m seed.generate                  # Claude-backed, richer output
+# Generate broad synthetic grievances across cities, platforms, languages, and complaint types
+python -m seed.generate --offline     # no API key required
+python -m seed.generate               # Claude-backed, richer output
 ```
 
----
-
-## Demo deployment
-
-### Local + Cloudflare Tunnel (recommended for demos)
-
-```bash
-# Terminal 1 — server
-conda activate hms
-uvicorn server.main:app --host 127.0.0.1 --port 8000
-
-# Terminal 2 — public tunnel
-cloudflared tunnel --url http://localhost:8000
-```
-
-Cloudflare prints a public `https://xxxx.trycloudflare.com` URL. Share it with judges. Keep both terminals open.
-
-**Tips:** disable laptop sleep, have a mobile hotspot ready as backup.
-
----
-
-## API routes
+## API reference
 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/` | Worker intake form |
 | `GET` | `/dashboard` | Organizer dashboard |
 | `GET` | `/health` | Health check |
-| `GET` | `/metadata` | City and platform lists |
-| `GET` | `/dashboard/state` | Full dashboard payload (filters: city, platform, since, recent_limit) |
-| `POST` | `/ingest/text` | Insert a text grievance |
+| `GET` | `/metadata` | City and platform option lists |
+| `GET` | `/dashboard/state` | Full dashboard payload — accepts `city`, `platform`, `since`, `recent_limit` |
+| `POST` | `/ingest/text` | Submit a text grievance |
 | `POST` | `/ingest` | Upload and transcribe an audio grievance |
 | `GET` | `/grievances` | List grievances |
 | `GET` | `/grievances/{id}` | Get one grievance |
-| `POST` | `/filing-chunks` | Create a filing chunk |
+| `POST` | `/filing-chunks` | Ingest a filing chunk |
 | `GET` | `/filing-chunks` | List filing chunks |
-| `POST` | `/syntheses` | Run synthesis for a scope (city, platform, since) |
-| `GET` | `/syntheses/latest` | Get the latest synthesis |
+| `POST` | `/syntheses` | Run synthesis for a scope (`city`, `platform`, `since`) |
+| `GET` | `/syntheses/latest` | Get the most recent synthesis |
 | `GET` | `/syntheses/{id}` | Get one synthesis |
-| `POST` | `/exports` | Generate or reuse a markdown export |
+| `POST` | `/exports` | Generate or retrieve a markdown export |
 | `GET` | `/exports/{id}` | Get one export |
 
 ---
@@ -154,29 +177,35 @@ Cloudflare prints a public `https://xxxx.trycloudflare.com` URL. Share it with j
 
 ```
 server/
-  main.py          FastAPI app and all routes
-  models.py        SQLAlchemy models (grievance, filing_chunk, synthesis, export)
-  ingest.py        Audio upload handler, worker secret hashing
-  transcribe.py    Local Whisper transcription (3-pass: detect → transcribe → translate)
-  synthesize.py    Four-stage pipeline with local fallbacks
-  claude.py        Anthropic SDK wrapper with structured output enforcement
-  prompts/         cluster.md, quantify.md, crossref.md, draft.md
+  main.py                   Routes and FastAPI app
+  models.py                 SQLAlchemy models
+  ingest.py                 Audio upload handler, worker secret hashing
+  transcribe.py             Local Whisper (detect → transcribe → translate)
+  synthesize.py             Four-stage pipeline with local fallbacks
+  claude.py                 Anthropic SDK wrapper, structured output enforcement
+  prompts/                  cluster.md  quantify.md  crossref.md  draft.md
+
 frontend/
-  form.html        Worker intake (audio recording, city/platform, EN/HI toggle)
-  dashboard.html   Organizer dashboard (themes, metrics, contradiction, exports)
-  shared.css       Shared design tokens and component styles
-  utils.js         escapeHtml, relativeTime
+  form.html                 Worker intake (recording, city/platform, EN/HI)
+  dashboard.html            Organizer dashboard (themes, metrics, contradiction, exports)
+  shared.css                Design tokens and shared component styles
+  utils.js                  escapeHtml, relativeTime
+
 seed/
-  generate.py      Synthetic grievance generator (30-axis: city, platform, language, complaint)
-  load_filings.py  Chunks and loads Swiggy/Zomato filings into filing_chunk table
-  seed_targeted_grievances.py  Surgical grievances designed to trigger contradictions
-  filings/raw/     Source PDFs (Swiggy DRHP 2024, Zomato annual report, investor call)
-  filings/text/    Plain-text conversions used by the loader
+  generate.py               Synthetic grievance generator
+  load_filings.py           Chunks and loads source filings into the database
+  seed_targeted_grievances.py   Contradiction-targeted grievance seeder
+  converter.py              PDF to plain-text converter
+  filings/raw/              Source PDFs
+  filings/text/             Plain-text conversions
+
 docs/
-  architecture.md  Full system spec
+  architecture.md           System design and data model
+  demo-script.md            Walkthrough script
+
 tests/
-  test_pipeline.py    End-to-end synthesis contract (runs with local fallback, no API key)
-  test_citations.py   Verifies citation IDs exist and n-counts match grievance_ids length
+  test_pipeline.py          End-to-end synthesis contract (offline)
+  test_citations.py         Citation integrity — IDs exist, n-counts match
 ```
 
 ---
@@ -184,10 +213,11 @@ tests/
 ## Tests
 
 ```bash
-conda activate hms
 pytest -q
 ```
 
-Both test suites run fully offline — no Anthropic API key required.
+Both suites run fully offline — no API key required.
 
----
+## License
+
+[MIT](LICENSE)
